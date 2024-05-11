@@ -1,0 +1,10 @@
+C:\Users\Benjamin\OneDrive\Code\Rain World\Slughost\github\branch\Slughost\bin\Debug\net48\Slughost.dll
+C:\Users\Benjamin\OneDrive\Code\Rain World\Slughost\github\branch\Slughost\bin\Debug\net48\Slughost.pdb
+C:\Users\Benjamin\OneDrive\Code\Rain World\Slughost\github\branch\Slughost\obj\Debug\net48\Slughost.csproj.AssemblyReference.cache
+C:\Users\Benjamin\OneDrive\Code\Rain World\Slughost\github\branch\Slughost\obj\Debug\net48\Slughost.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Benjamin\OneDrive\Code\Rain World\Slughost\github\branch\Slughost\obj\Debug\net48\Slughost.AssemblyInfoInputs.cache
+C:\Users\Benjamin\OneDrive\Code\Rain World\Slughost\github\branch\Slughost\obj\Debug\net48\Slughost.AssemblyInfo.cs
+C:\Users\Benjamin\OneDrive\Code\Rain World\Slughost\github\branch\Slughost\obj\Debug\net48\Slughost.csproj.CoreCompileInputs.cache
+C:\Users\Benjamin\OneDrive\Code\Rain World\Slughost\github\branch\Slughost\obj\Debug\net48\Slughost.sourcelink.json
+C:\Users\Benjamin\OneDrive\Code\Rain World\Slughost\github\branch\Slughost\obj\Debug\net48\Slughost.dll
+C:\Users\Benjamin\OneDrive\Code\Rain World\Slughost\github\branch\Slughost\obj\Debug\net48\Slughost.pdb
