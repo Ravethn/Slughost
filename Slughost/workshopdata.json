@@ -1,0 +1,18 @@
+{
+  "Title": "Slughosts",
+  "Description": "Paranormal slugcat activity detected, who are we going to call?!\r\nJoin the spooky side after your untimely demise! Ghosts can\u0027t do much but they can still walk around and stuff.\r\nNot really finished so lemme know if there\u0027s any bugs!",
+  "ID": "Ravethn.Slughost",
+  "Version": "1.0.0",
+  "TargetGameVersion": "v1.9.15.3",
+  "Requirements": "",
+  "RequirementNames": "",
+  "Authors": "Ravethn",
+  "Visibility": "Unlisted",
+  "Tags": [
+    "Game Mechanics",
+    "Game Modes"
+  ],
+  "WorkshopID": 3244001269,
+  "UploadFilesOnly": false,
+  "UploadThumbnail": false
+}

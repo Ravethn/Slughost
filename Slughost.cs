@@ -10,6 +10,8 @@ using BepInEx;
 using Debug = UnityEngine.Debug;
 using System.Data.SqlClient;
 using UnityEngine.Rendering;
+using System.Runtime.Serialization;
+using Newtonsoft.Json.Serialization;
 
 #pragma warning disable CS0618
 
@@ -67,8 +69,8 @@ public partial class SlughostMod : BaseUnityPlugin
             On.Player.Update += PlayerOnUpdate;
             On.Player.LungUpdate += PlayerOnLungUpdate;
             On.Weapon.HitThisObject += WeaponOnHitThisObject;
-            On.Player.GrabUpdate += PlayerOnGrabUpdate;
             On.PlayerGraphics.TailSpeckles.setSpearProgress += PlayerGraphicsOnSetSpearProgress;
+            On.Player.PyroDeath += PlayerOnPyroDeath;
 
 
             On.RainWorldGame.ShutDownProcess += RainWorldGameOnShutDownProcess;

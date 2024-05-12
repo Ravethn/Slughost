@@ -25,8 +25,8 @@ public partial class SlughostMod
 
     private static WorldCoordinate ToPipeOrCam(Player self)
     {
-        //If ghost is destroyed, make new one at camera holder if there are alive players
-        if (self.room.game.AlivePlayers.Count > 0 && self.room.game.RealizedPlayerFollowedByCamera != self && self.room.game.RealizedPlayerFollowedByCamera.playerState.alive)
+        //Sets ghost spawn point to the player with the camera
+        if (self.room.game.RealizedPlayerFollowedByCamera != self && !self.room.game.RealizedPlayerFollowedByCamera.inShortcut && self.room.game.RealizedPlayerFollowedByCamera != null)
         {
             return self.room.game.RealizedPlayerFollowedByCamera.coord;
         }
@@ -182,7 +182,8 @@ public partial class SlughostMod
     {
         if (self is PlayerGhost)
         {
-            if (self.airInLungs < 0.5f)
+            //arti explodes if it goes under 0.65
+            if (self.airInLungs < 0.66f)
             {
                 self.airInLungs = 1f;
             }
@@ -270,7 +271,7 @@ public partial class SlughostMod
         }
         else if (!ModManager.CoopAvailable && !forbidGhosts && !self.isNPC && !self.playerState.isGhost)
         {
-            //If Jolly coop is off, creates a ghost when a player falls since Player.Destroy since without Jolly, PermaDie method does not run
+            //If Jolly coop is off, creates a ghost when a player falls since Player.Destroy without Jolly does not run PermaDie method
             WorldCoordinate spawnCoord2 = ToPipeOrCam(self);
             CreateGhost(self, spawnCoord2);
         }
@@ -304,10 +305,18 @@ public partial class SlughostMod
                 {
                     (self as PlayerGhost).ghostTeleTimer++;
                 }
-                Debug.Log("GhostTeleTimer: " + (self as PlayerGhost).ghostTeleTimer.ToString());
-                if ((self as PlayerGhost).ghostTeleTimer == 60 && self.room.game.RealizedPlayerFollowedByCamera != self && self.room.game.RealizedPlayerFollowedByCamera != null && !self.room.game.RealizedPlayerFollowedByCamera.inShortcut && self.room.game.RealizedPlayerFollowedByCamera != null)
+                //Debug.Log("GhostTeleTimer: " + (self as PlayerGhost).ghostTeleTimer.ToString());
+                if ((self as PlayerGhost).ghostTeleTimer == 60)
                 {
-                    PlayerGhost.WarpAndReviveGhost(self as PlayerGhost, self.room.game.RealizedPlayerFollowedByCamera.room.abstractRoom, self.room.game.RealizedPlayerFollowedByCamera.firstChunk.pos);
+                    if(self.room.game.RealizedPlayerFollowedByCamera != self && !self.room.game.RealizedPlayerFollowedByCamera.inShortcut && self.room.game.RealizedPlayerFollowedByCamera != null)
+                    {
+                        PlayerGhost.WarpAndReviveGhost(self as PlayerGhost, self.room.game.RealizedPlayerFollowedByCamera.room.abstractRoom, ToPipeOrCam(self));
+                    }
+                    else
+                    {
+                        PlayerGhost.WarpAndReviveGhost(self as PlayerGhost, self.room.abstractRoom, ToPipeOrCam(self));
+                    }
+                    
                 }
             }
             else
@@ -326,18 +335,27 @@ public partial class SlughostMod
         }
     }
 
-    private void PlayerOnGrabUpdate(On.Player.orig_GrabUpdate orig, Player self, bool eu)
-    {
-        orig(self, eu);
-    }
-
+    
     private void PlayerGraphicsOnSetSpearProgress(On.PlayerGraphics.TailSpeckles.orig_setSpearProgress orig, PlayerGraphics.TailSpeckles self, float p)
     {
         orig(self, p);
-        if(self.spearProg > 0 && self.pGraphics.player is PlayerGhost)
+        //Stop spearmaster from making spears for now so they can't get food
+        if (self.spearProg > 0 && self.pGraphics.player is PlayerGhost)
         {
             self.spearProg = 0;
         }
+    }
+
+    
+    private void PlayerOnPyroDeath(On.Player.orig_PyroDeath orig, Player self)
+    {
+        //Stop ghost arti from exploding when dying from pyrodeath
+        if (self is PlayerGhost)
+        {
+            self.Die();
+            return;
+        }
+        orig(self);
     }
 
 }

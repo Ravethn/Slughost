@@ -11,7 +11,7 @@ public class SlughostModOptions : OptionInterface
 
     public SlughostModOptions(SlughostMod modInstance, ManualLogSource loggerSource)
     {
-        //Logger = loggerSource;
+        Logger = loggerSource;
         //PlayerSpeed = this.config.Bind<float>("PlayerSpeed", 1f, new ConfigAcceptableRange<float>(0f, 100f));
     }
 
@@ -29,7 +29,7 @@ public class SlughostModOptions : OptionInterface
 
         UIArrPlayerOptions = new UIelement[]
         {
-            //new OpLabel(10f, 550f, "Options", true),
+            new OpLabel(10f, 550f, "Options", true),
             //new OpLabel(10f, 520f, "Player run speed factor"),
             //new OpUpdown(PlayerSpeed, new Vector2(10f,490f), 100f, 1),
             
@@ -40,6 +40,7 @@ public class SlughostModOptions : OptionInterface
 
     public override void Update()
     {
+        /*
         if (((OpUpdown)UIArrPlayerOptions[2]).GetValueFloat() > 10)
         {
             ((OpLabel)UIArrPlayerOptions[3]).Show();
@@ -48,6 +49,7 @@ public class SlughostModOptions : OptionInterface
         {
             ((OpLabel)UIArrPlayerOptions[3]).Hide();
         }
+        */
     }
 
 }

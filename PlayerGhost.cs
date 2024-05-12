@@ -21,7 +21,7 @@ public class PlayerGhost : Player
     }
 
 
-    public static void WarpAndReviveGhost(PlayerGhost self, AbstractRoom newRoom, Vector2 position)
+    public static void WarpAndReviveGhost(PlayerGhost self, AbstractRoom newRoom, WorldCoordinate position)
     {
         //JollyCustom.WarpAndRevivePlayer()
         //
@@ -59,11 +59,11 @@ public class PlayerGhost : Player
             if(self.abstractCreature.world != newRoom.world)
             {
                 self.abstractCreature.world = newRoom.world;
-                self.abstractCreature.pos = newRoom.realizedRoom.GetWorldCoordinate(position);
+                self.abstractCreature.pos = position;
                 self.abstractCreature.Room.RemoveEntity(self.abstractCreature);
             }
             newRoom.AddEntity(self.abstractCreature);
-            self.abstractCreature.Move(newRoom.realizedRoom.GetWorldCoordinate(position));
+            self.abstractCreature.Move(position);
             self.abstractCreature.realizedCreature.PlaceInRoom(newRoom.realizedRoom);
         }
         //If ghost is in another room
@@ -80,25 +80,32 @@ public class PlayerGhost : Player
                 newRoom.realizedRoom.game.world.ActivateRoom(newRoom);
             }
             self.room.RemoveObject(self);
-            self.abstractCreature.Move(newRoom.realizedRoom.GetWorldCoordinate(position));
+            self.abstractCreature.Move(position);
             self.PlaceInRoom(newRoom.realizedRoom);
             Debug.Log("Ghost teleported from another room!");
             
         }
         //If ghost is in the same room
-        else if (self.abstractCreature.Room.name == newRoom.name && newRoom.realizedRoom != null && self.firstChunk.pos != position)
+        else if (self.abstractCreature.Room.name == newRoom.name && newRoom.realizedRoom != null)
         {
-            //Debug.Log("4");
-
-            Debug.Log("Ghost tp in same room");
-            for (int i = 0; i < self.bodyChunks.Length; i++)
+            if (self.firstChunk.pos != self.room.game.RealizedPlayerFollowedByCamera.firstChunk.pos)
             {
-                self.bodyChunks[i].pos = position;
-                
+                Debug.Log("Ghost tp to camera in same room");
+                for (int i = 0; i < self.bodyChunks.Length; i++)
+                {
+                    self.bodyChunks[i].pos = self.room.game.RealizedPlayerFollowedByCamera.firstChunk.pos;
+                }
             }
-            
+            else if (newRoom.realizedRoom != null)
+            {
+                Debug.Log("Ghost tp to shortcut spot");
+                self.SpitOutOfShortCut(new RWCustom.IntVector2(position.x, position.y), newRoom.realizedRoom, false);
+            }
+
+
         }
         self.playerState.permaDead = false;
         self.dead = false;
+        self.exhausted = false;
     }
 }
