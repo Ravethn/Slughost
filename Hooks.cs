@@ -264,8 +264,9 @@ public partial class SlughostMod
     private void PlayerOnDestroy(On.Player.orig_Destroy orig, Player self)
     {
 
-        if (self is PlayerGhost)
+        if (self is PlayerGhost && !forbidGhosts)
         {
+            //Creates new ghost if ghost falls off of map into deathpit since it is about to be deleted
             WorldCoordinate spawnCoord = ToPipeOrCam(self);
             CreateGhost(self, spawnCoord);
         }
@@ -305,6 +306,11 @@ public partial class SlughostMod
                 {
                     (self as PlayerGhost).ghostTeleTimer++;
                 }
+                //Stop ghost with grabbing ability from swallowing items and accidentally deleting them
+                self.swallowAndRegurgitateCounter = 0;
+                //Stop ghost from being able to eat
+                self.eatCounter = 15;
+
                 //Debug.Log("GhostTeleTimer: " + (self as PlayerGhost).ghostTeleTimer.ToString());
                 if ((self as PlayerGhost).ghostTeleTimer == 60)
                 {
@@ -318,6 +324,7 @@ public partial class SlughostMod
                     }
                     
                 }
+
             }
             else
             {

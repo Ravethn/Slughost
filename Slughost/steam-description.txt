@@ -1,0 +1,17 @@
+Paranormal slugcat activity detected, who are we going to call?! Join the spooky side after your untimely demise! Ghosts can't do much but they can still walk around and stuff. Not really finished so lemme know if there's any bugs!
+
+All slug ghosts have a special teleporting power if they hold the GRAB button for a couple seconds! With this ability the ghost can magically teleport to the camera holder. If the camera is on the ghost itself it sends them to a random entrance to the room instead. If you manage to die as a ghost, teleportation will revive them!
+
+Special ghost powers:
+
+-Artificer can still use their explosive jump / parry!
+
+-Saint can pick up things normally since they are so in tune with the world!
+
+-No other special ghost powers right now, but I got some ideas for cool abilities!
+
+Come check out the github to see the code: https://github.com/Ravethn/Slughost
+
+Incompatible mods:
+
+-Individual Food Bars

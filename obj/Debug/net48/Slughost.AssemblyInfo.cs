@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Slughost")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9caeb98746fc8f86bbae2350162bd273241828c0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9aa7d73686170508060ed4f5b88f7becbe516d16")]
 [assembly: System.Reflection.AssemblyProductAttribute("Slughost")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Slughost")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

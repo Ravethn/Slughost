@@ -20,7 +20,7 @@ using Newtonsoft.Json.Serialization;
 
 namespace SlughostMod;
 
-[BepInPlugin("Ravethn.Slughost", "Slughosts", "1.0.0")]
+[BepInPlugin("Ravethn.Slughost", "Slughosts", "1.0.2")]
 public partial class SlughostMod : BaseUnityPlugin
 {
     private SlughostModOptions Options;
