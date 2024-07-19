@@ -221,13 +221,6 @@ public partial class SlughostMod
         if (!self.Broken)
         {
             forbidGhosts = true;
-            foreach (Player player in self.room.physicalObjects.SelectMany((List<PhysicalObject> x) => x).OfType<Player>())
-            {
-                if (player is PlayerGhost)
-                {
-                    player.slatedForDeletetion = true;
-                }
-            }
         }
         orig(self);
 
@@ -269,6 +262,7 @@ public partial class SlughostMod
             //Creates new ghost if ghost falls off of map into deathpit since it is about to be deleted
             WorldCoordinate spawnCoord = ToPipeOrCam(self);
             CreateGhost(self, spawnCoord);
+            Debug.Log("Ghost destroyed! Creating new ghost!");
         }
         else if (!ModManager.CoopAvailable && !forbidGhosts && !self.isNPC && !self.playerState.isGhost)
         {
@@ -290,12 +284,16 @@ public partial class SlughostMod
             {
                 foreach (AbstractCreature absPlayer in self.room.game.AlivePlayers)
                 {
-                    if ((absPlayer.realizedCreature as Player).playerState.playerNumber == self.playerState.playerNumber)
+                    if (absPlayer.realizedCreature != null && (absPlayer.realizedCreature as Player).playerState.playerNumber == self.playerState.playerNumber)
                     {
                         //Deletes ghost if the player is revived
                         //Need to make a cool deletion effect for this
                         self.slatedForDeletetion = true;
                     }
+                }
+                if (forbidGhosts)
+                {
+                    self.slatedForDeletetion = true;
                 }
             }
 
