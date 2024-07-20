@@ -112,6 +112,8 @@ public partial class SlughostMod
         StaticWorld.EstablishRelationship(CreatureTemplate.Type.PoleMimic, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
         StaticWorld.EstablishRelationship(CreatureTemplate.Type.Spider, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
         StaticWorld.EstablishRelationship(CreatureTemplate.Type.BigEel, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
+        StaticWorld.EstablishRelationship(CreatureTemplate.Type.TentaclePlant, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
+        StaticWorld.EstablishRelationship(CreatureTemplate.Type.MirosBird, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
         if (ModManager.MSC)
         {
             StaticWorld.EstablishRelationship(MyModdedEnums.CreatureTemplateType.SlugcatGhost, MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.MirosVulture, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.Afraid, 1f));
@@ -378,5 +380,18 @@ public partial class SlughostMod
         }
     }
 
+    private bool MirosBirdAIOnDoIWantToBiteCreature(On.MirosBirdAI.orig_DoIWantToBiteCreature orig, MirosBirdAI self, AbstractCreature creature)
+    {
+        if (creature.creatureTemplate.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost)
+        {
+            return false;
+        }
+        return orig(self, creature);
+    }
+
+    private void MirosBirdOnJawSlamShut(On.MirosBird.orig_JawSlamShut orig, MirosBird self)
+    {
+        orig(self);
+    }
 
 }
