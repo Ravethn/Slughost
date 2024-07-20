@@ -12,6 +12,8 @@ using System.Data.SqlClient;
 using UnityEngine.Rendering;
 using System.Runtime.Serialization;
 using Newtonsoft.Json.Serialization;
+using IL.Menu.Remix.MixedUI;
+using Menu.Remix.MixedUI;
 
 #pragma warning disable CS0618
 
@@ -71,6 +73,7 @@ public partial class SlughostMod : BaseUnityPlugin
             On.Weapon.HitThisObject += WeaponOnHitThisObject;
             On.PlayerGraphics.TailSpeckles.setSpearProgress += PlayerGraphicsOnSetSpearProgress;
             On.Player.PyroDeath += PlayerOnPyroDeath;
+            On.BigEel.JawsSnap += BigEelOnJawsSnap;
 
 
             On.RainWorldGame.ShutDownProcess += RainWorldGameOnShutDownProcess;

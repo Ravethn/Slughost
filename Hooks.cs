@@ -111,6 +111,7 @@ public partial class SlughostMod
         StaticWorld.EstablishRelationship(MyModdedEnums.CreatureTemplateType.SlugcatGhost, CreatureTemplate.Type.RedCentipede, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.Afraid, 1f));
         StaticWorld.EstablishRelationship(CreatureTemplate.Type.PoleMimic, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
         StaticWorld.EstablishRelationship(CreatureTemplate.Type.Spider, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
+        StaticWorld.EstablishRelationship(CreatureTemplate.Type.BigEel, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
         if (ModManager.MSC)
         {
             StaticWorld.EstablishRelationship(MyModdedEnums.CreatureTemplateType.SlugcatGhost, MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.MirosVulture, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.Afraid, 1f));
@@ -324,7 +325,7 @@ public partial class SlughostMod
                 }
 
             }
-            else
+            else if ((self as PlayerGhost).ghostTeleTimer > 0)
             {
                 (self as PlayerGhost).ghostTeleTimer = 0;
             }
@@ -362,5 +363,20 @@ public partial class SlughostMod
         }
         orig(self);
     }
+
+    private void BigEelOnJawsSnap(On.BigEel.orig_JawsSnap orig, BigEel self)
+    {
+        orig(self);
+        for (int i = 0; i < self.clampedObjects.Count; i++)
+        {
+            if (self.clampedObjects[i].chunk.owner is PlayerGhost)
+            {
+                (self.clampedObjects[i].chunk.owner as PlayerGhost).dead = false;
+                self.clampedObjects.RemoveAt(i);
+                self.clampedObjects.RemoveAt(i);
+            }
+        }
+    }
+
 
 }
