@@ -16,6 +16,7 @@ using IL.Menu.Remix.MixedUI;
 using Menu.Remix.MixedUI;
 using On.Menu.Remix.MixedUI;
 using System.Runtime.Remoting.Messaging;
+using MonoMod.RuntimeDetour;
 
 #pragma warning disable CS0618
 
@@ -78,6 +79,7 @@ public partial class SlughostMod : BaseUnityPlugin
             On.BigEel.JawsSnap += BigEelOnJawsSnap;
             On.MirosBirdAI.DoIWantToBiteCreature += MirosBirdAIOnDoIWantToBiteCreature;
             On.MirosBird.JawSlamShut += MirosBirdOnJawSlamShut;
+            On.Player.SlugOnBack.ChangeOverlap += SlugOnBackOnChangeOverlap;
 
 
             On.RainWorldGame.ShutDownProcess += RainWorldGameOnShutDownProcess;

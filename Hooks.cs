@@ -399,4 +399,14 @@ public partial class SlughostMod
         orig(self);
     }
 
+    private void SlugOnBackOnChangeOverlap(On.Player.SlugOnBack.orig_ChangeOverlap orig, Player.SlugOnBack self, bool newOverlap)
+    {
+        orig(self, newOverlap);
+        if(self.slugcat is PlayerGhost)
+        {
+            self.slugcat.CollideWithObjects = false;
+        }
+        
+    }
+
 }
