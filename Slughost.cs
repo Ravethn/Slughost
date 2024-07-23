@@ -19,6 +19,7 @@ using System.Runtime.Remoting.Messaging;
 using MonoMod.RuntimeDetour;
 using System.Xml;
 using MonoMod.Cil;
+using System.Runtime.Remoting.Lifetime;
 
 #pragma warning disable CS0618
 
@@ -83,6 +84,7 @@ public partial class SlughostMod : BaseUnityPlugin
             On.MirosBird.JawSlamShut += MirosBirdOnJawSlamShut;
             On.Player.SlugOnBack.ChangeOverlap += SlugOnBackOnChangeOverlap;
             IL.GhostCreatureSedater.Update += GhostCreatureSedaterILUpdate;
+            IL.DartMaggot.ShotUpdate += DartMaggotILShotUpdate;
 
 
             On.RainWorldGame.ShutDownProcess += RainWorldGameOnShutDownProcess;

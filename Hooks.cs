@@ -447,10 +447,55 @@ public partial class SlughostMod
                 return ghostCreatureSedater.room.abstractRoom.creatures[index].creatureTemplate.type != MyModdedEnums.CreatureTemplateType.SlugcatGhost;
             });
             c.Emit(OpCodes.Brfalse, skipLabel);
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex);
+        }
+    }
+
+    void DartMaggotILShotUpdate(ILContext il)
+    {
+        try
+        {
+
+            //Checks if creature is Slugcat ghost to avoid spitter spider dart
+            var c = new ILCursor(il);
+            var d = new ILCursor(il);
+            ILLabel skipLabel = d.DefineLabel();
+            c.GotoNext(
+                i => i.MatchLdloc(5),
+                i => i.MatchLdfld<SharedPhysics.CollisionResult>(nameof(SharedPhysics.CollisionResult.chunk)),
+                i => i.MatchCallvirt(typeof(BodyChunk).GetProperty("owner").GetGetMethod()),
+                i => i.MatchIsinst(nameof(TempleGuard)),
+                i => i.MatchBrtrue(out _)
+                );
+            d.GotoNext(
+                i => i.MatchLdarg(0),
+                i => i.MatchCall(typeof(PhysicalObject).GetProperty("firstChunk").GetGetMethod()),
+                i => i.MatchDup(),
+                i => i.MatchLdfld<BodyChunk>(nameof(BodyChunk.pos))
+                );
+            d.MarkLabel(skipLabel);
+            c.Index += 5;
+
+            
+            c.Emit(OpCodes.Ldloc, 5);
+            c.EmitDelegate((SharedPhysics.CollisionResult collisionResult) =>
+            {
+                if (collisionResult.chunk.owner is PlayerGhost)
+                {
+                    return false;
+                }
+                return true;
+            });
+            c.Emit(OpCodes.Brfalse, skipLabel);
             
 
-            Logger.LogInfo(d);
-            Logger.LogInfo(c);
+
+            Logger.LogInfo("Position of cursor D: " + d);
+            Logger.LogInfo("Position of cursor C: " + c);
 
         }
         catch (Exception ex)
