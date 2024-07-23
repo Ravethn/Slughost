@@ -137,14 +137,91 @@ public partial class SlughostMod
     }
     #endregion
 
-    //Shader for ghosts
-    /*
-    private void RainWorldOnProcessManagerInitializsation(On.RainWorld.orig_ProcessManagerInitializsation orig, RainWorld self)
+    #region MapIcon Code
+    private static Color CreatureSymbolOnColorOfCreature(On.CreatureSymbol.orig_ColorOfCreature orig, IconSymbol.IconSymbolData iconData)
     {
-        orig(self);
+        if (iconData.critType == MyModdedEnums.CreatureTemplateType.SlugcatGhost && iconData.critType.index != -1)
+        {
+            return PlayerGraphics.DefaultSlugcatColor(SlugcatStats.Name.ArenaColor(iconData.intData));
+        }
+        return orig(iconData);
     }
-    */
-    
+
+    private static string CreatureSymbolOnSpriteNameOfCreature(On.CreatureSymbol.orig_SpriteNameOfCreature orig, IconSymbol.IconSymbolData iconData)
+    {
+        if (iconData.critType == MyModdedEnums.CreatureTemplateType.SlugcatGhost && iconData.critType.index != -1)
+        {
+            return "Kill_Slugcat";
+        }
+        return orig(iconData);
+    }
+
+    private static IconSymbol.IconSymbolData CreatureSymbolOnSymbolDataFromCreature(On.CreatureSymbol.orig_SymbolDataFromCreature orig, AbstractCreature creature)
+    {
+        if (creature.creatureTemplate.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost)
+        {
+            return new IconSymbol.IconSymbolData(creature.creatureTemplate.type, AbstractPhysicalObject.AbstractObjectType.Creature, (creature.state as PlayerGhostState).playerNumber);
+        }
+        return orig(creature);
+    }
+
+    void MapILDraw(ILContext il)
+    {
+        try
+        {
+
+            //Adds slugcat ghost check to method to not skip coloring ghost icon
+            var c = new ILCursor(il);
+            var d = new ILCursor(il);
+            c.GotoNext(
+                i => i.MatchLdloc(11),
+                i => i.MatchLdfld<AbstractCreature>(nameof(AbstractCreature.creatureTemplate)),
+                i => i.MatchLdfld<CreatureTemplate>(nameof(CreatureTemplate.type)),
+                i => i.MatchLdsfld<CreatureTemplate.Type>(nameof(CreatureTemplate.Type.Slugcat)),
+                i => i.MatchCall(typeof(ExtEnum<CreatureTemplate.Type>).GetMethod("op_Equality")),
+                i => i.MatchBrfalse(out _)
+                );
+
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Ldloc, 11);
+            c.EmitDelegate((HUD.Map self, AbstractCreature abstractCreature) =>
+            {
+                if (abstractCreature.creatureTemplate.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost)
+                {
+                    self.creatureSymbols[self.creatureSymbols.Count - 1].myColor = RainWorld.PlayerObjectBodyColors[(abstractCreature.realizedCreature as PlayerGhost).playerState.playerNumber];
+                }
+            });
+
+
+            Logger.LogInfo("Position of cursor C: " + c);
+            Logger.LogInfo("Position of cursor D: " + d);
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex);
+        }
+    }
+
+    private static HUD.Map.ItemMarker.ItemMakerData? ItemMakerDataOnDataFromAbstractPhysical(On.HUD.Map.ItemMarker.ItemMakerData.orig_DataFromAbstractPhysical orig, AbstractPhysicalObject obj)
+    {
+        if (obj is AbstractCreature && (obj as AbstractCreature).creatureTemplate.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost)
+        {
+            return null;
+        }
+        return orig(obj);
+    }
+
+    private static HUD.Map.ShelterMarker.ItemInShelterMarker.ItemInShelterData? ItemInShelterDataOnDataFromAbstractPhysical(On.HUD.Map.ShelterMarker.ItemInShelterMarker.ItemInShelterData.orig_DataFromAbstractPhysical orig, AbstractPhysicalObject obj)
+    {
+        if (obj is AbstractCreature && (obj as AbstractCreature).creatureTemplate.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost)
+        {
+            return null;
+        }
+        return orig(obj);
+    }
+    #endregion
+
     //Ghost transparency
     private void PlayerGraphicsOnInitiateSprites(On.PlayerGraphics.orig_InitiateSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
     {
@@ -491,11 +568,6 @@ public partial class SlughostMod
                 return true;
             });
             c.Emit(OpCodes.Brfalse, skipLabel);
-            
-
-
-            Logger.LogInfo("Position of cursor D: " + d);
-            Logger.LogInfo("Position of cursor C: " + c);
 
         }
         catch (Exception ex)
@@ -503,5 +575,50 @@ public partial class SlughostMod
             Logger.LogError(ex);
         }
     }
+
+    void TubeWormTongueILUpdate(ILContext il)
+    {
+        try
+        {
+
+            //Checks if creature is Slugcat ghost to avoid being grabbed by Tubeworms
+            var c = new ILCursor(il);
+            var d = new ILCursor(il);
+            ILLabel skipLabel = d.DefineLabel();
+            c.GotoNext(
+                i => i.MatchStloc(2),
+                i => i.MatchLdloc(2),
+                i => i.MatchLdfld<SharedPhysics.CollisionResult>(nameof(SharedPhysics.CollisionResult.chunk)),
+                i => i.MatchBrfalse(out _)
+                );
+            d.GotoNext(
+                i => i.MatchLdloc(0),
+                i => i.MatchBrtrue(out _),
+                i => i.MatchLdarg(0),
+                i => i.MatchLdfld<TubeWorm.Tongue>(nameof(TubeWorm.Tongue.worm))
+                );
+            d.MarkLabel(skipLabel);
+            c.Index += 4;
+
+            c.Emit(OpCodes.Ldloc_2);
+            c.EmitDelegate((SharedPhysics.CollisionResult collisionResult) =>
+            {
+                if (collisionResult.chunk.owner is PlayerGhost)
+                {
+                    return false;
+                }
+                return true;
+            });
+            c.Emit(OpCodes.Brfalse, skipLabel);
+
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex);
+        }
+    }
+
+
 
 }

@@ -20,6 +20,12 @@ using MonoMod.RuntimeDetour;
 using System.Xml;
 using MonoMod.Cil;
 using System.Runtime.Remoting.Lifetime;
+using Steamworks;
+using MonoMod;
+using Unity.Collections.LowLevel.Unsafe;
+using IL.Stove.Sample.Session;
+using System.Reflection.Emit;
+using On.Stove.Sample.Session;
 
 #pragma warning disable CS0618
 
@@ -85,6 +91,12 @@ public partial class SlughostMod : BaseUnityPlugin
             On.Player.SlugOnBack.ChangeOverlap += SlugOnBackOnChangeOverlap;
             IL.GhostCreatureSedater.Update += GhostCreatureSedaterILUpdate;
             IL.DartMaggot.ShotUpdate += DartMaggotILShotUpdate;
+            IL.TubeWorm.Tongue.Update += TubeWormTongueILUpdate;
+            On.CreatureSymbol.ColorOfCreature += CreatureSymbolOnColorOfCreature;
+            On.CreatureSymbol.SpriteNameOfCreature += CreatureSymbolOnSpriteNameOfCreature;
+            IL.HUD.Map.Draw += MapILDraw;
+            On.HUD.Map.ItemMarker.ItemMakerData.DataFromAbstractPhysical += ItemMakerDataOnDataFromAbstractPhysical;
+            On.HUD.Map.ShelterMarker.ItemInShelterMarker.ItemInShelterData.DataFromAbstractPhysical += ItemInShelterDataOnDataFromAbstractPhysical;
 
 
             On.RainWorldGame.ShutDownProcess += RainWorldGameOnShutDownProcess;
