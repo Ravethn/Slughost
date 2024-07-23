@@ -14,6 +14,9 @@ using System.Runtime.InteropServices;
 using System.Security.Permissions;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
+using System.Net;
 
 namespace SlughostMod;
 
@@ -404,9 +407,56 @@ public partial class SlughostMod
         orig(self, newOverlap);
         if(self.slugcat is PlayerGhost)
         {
+            //Makes sure that when Slugcat Ghost stays not colliding with objects when leaving a slugback
             self.slugcat.CollideWithObjects = false;
         }
         
+    }
+
+    void GhostCreatureSedaterILUpdate(ILContext il)
+    {
+        try
+        {
+            
+            //Checks if creature is Slugcat Ghost to skip ghost dream cycle stun 
+            var c = new ILCursor(il);
+            var d = new ILCursor(il);
+            ILLabel skipLabel = d.DefineLabel();
+            c.GotoNext(
+                i => i.MatchLdloc(0),
+                i => i.MatchCallvirt(typeof(List<AbstractCreature>).GetProperty("Item").GetGetMethod()),
+                i => i.MatchLdfld<AbstractCreature>(nameof(AbstractCreature.creatureTemplate)),
+                i => i.MatchLdfld<CreatureTemplate>(nameof(CreatureTemplate.type)),
+                i => i.MatchLdsfld<MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType>(nameof(MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.SlugNPC)),
+                i => i.MatchCall(typeof(ExtEnum<CreatureTemplate.Type>).GetMethod("op_Inequality")),
+                i => i.MatchBrfalse(out _)
+                );
+            d.GotoNext(
+                i => i.MatchLdloc(0),
+                i => i.MatchLdcI4(1),
+                i => i.MatchAdd(),
+                i => i.MatchStloc(0)
+                );
+            d.MarkLabel(skipLabel);
+            c.Index += 7;
+
+            c.Emit(OpCodes.Ldarg_0); //calling self (GhostCreatureSedater)
+            c.Emit(OpCodes.Ldloc_0); //local int32 for loop index
+            c.EmitDelegate((GhostCreatureSedater ghostCreatureSedater, Int32 index) =>
+            {
+                return ghostCreatureSedater.room.abstractRoom.creatures[index].creatureTemplate.type != MyModdedEnums.CreatureTemplateType.SlugcatGhost;
+            });
+            c.Emit(OpCodes.Brfalse, skipLabel);
+            
+
+            Logger.LogInfo(d);
+            Logger.LogInfo(c);
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex);
+        }
     }
 
 }
