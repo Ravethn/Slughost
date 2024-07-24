@@ -35,7 +35,7 @@ using MonoMod.Utils.Cil;
 
 namespace SlughostMod;
 
-[BepInPlugin("Ravethn.Slughost", "Slughosts", "1.0.2")]
+[BepInPlugin("Ravethn.Slughost", "Slughosts", "1.0.3")]
 public partial class SlughostMod : BaseUnityPlugin
 {
     private SlughostModOptions Options;
