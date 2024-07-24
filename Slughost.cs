@@ -12,6 +12,21 @@ using System.Data.SqlClient;
 using UnityEngine.Rendering;
 using System.Runtime.Serialization;
 using Newtonsoft.Json.Serialization;
+using IL.Menu.Remix.MixedUI;
+using Menu.Remix.MixedUI;
+using On.Menu.Remix.MixedUI;
+using System.Runtime.Remoting.Messaging;
+using MonoMod.RuntimeDetour;
+using System.Xml;
+using MonoMod.Cil;
+using System.Runtime.Remoting.Lifetime;
+using Steamworks;
+using MonoMod;
+using Unity.Collections.LowLevel.Unsafe;
+using IL.Stove.Sample.Session;
+using System.Reflection.Emit;
+using On.Stove.Sample.Session;
+using MonoMod.Utils.Cil;
 
 #pragma warning disable CS0618
 
@@ -20,7 +35,7 @@ using Newtonsoft.Json.Serialization;
 
 namespace SlughostMod;
 
-[BepInPlugin("Ravethn.Slughost", "Slughosts", "1.0.2")]
+[BepInPlugin("Ravethn.Slughost", "Slughosts", "1.0.3")]
 public partial class SlughostMod : BaseUnityPlugin
 {
     private SlughostModOptions Options;
@@ -71,6 +86,19 @@ public partial class SlughostMod : BaseUnityPlugin
             On.Weapon.HitThisObject += WeaponOnHitThisObject;
             On.PlayerGraphics.TailSpeckles.setSpearProgress += PlayerGraphicsOnSetSpearProgress;
             On.Player.PyroDeath += PlayerOnPyroDeath;
+            On.BigEel.JawsSnap += BigEelOnJawsSnap;
+            On.MirosBirdAI.DoIWantToBiteCreature += MirosBirdAIOnDoIWantToBiteCreature;
+            On.MirosBird.JawSlamShut += MirosBirdOnJawSlamShut;
+            On.Player.SlugOnBack.ChangeOverlap += SlugOnBackOnChangeOverlap;
+            IL.GhostCreatureSedater.Update += GhostCreatureSedaterILUpdate;
+            //IL.DartMaggot.ShotUpdate += DartMaggotILShotUpdate;
+            //IL.TubeWorm.Tongue.Update += TubeWormTongueILUpdate;
+            On.CreatureSymbol.ColorOfCreature += CreatureSymbolOnColorOfCreature;
+            On.CreatureSymbol.SpriteNameOfCreature += CreatureSymbolOnSpriteNameOfCreature;
+            IL.HUD.Map.Draw += MapILDraw;
+            On.HUD.Map.ItemMarker.ItemMakerData.DataFromAbstractPhysical += ItemMakerDataOnDataFromAbstractPhysical;
+            //IL.SharedPhysics.TraceProjectileAgainstBodyChunks += SharedPhysicsILTraceProjectileAgainstBodyChunks;
+            On.HUD.Map.ShelterMarker.ItemInShelterMarker.ItemInShelterData.DataFromAbstractPhysical += ItemInShelterDataOnDataFromAbstractPhysical;
 
 
             On.RainWorldGame.ShutDownProcess += RainWorldGameOnShutDownProcess;

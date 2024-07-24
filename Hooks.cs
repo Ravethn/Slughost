@@ -14,6 +14,9 @@ using System.Runtime.InteropServices;
 using System.Security.Permissions;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
+using System.Net;
 
 namespace SlughostMod;
 
@@ -48,6 +51,7 @@ public partial class SlughostMod
         self.room.abstractRoom.AddEntity(newGhost);
         newGhost.RealizeInRoom();
     }
+
 
     #region StaticWorld Init
 
@@ -111,8 +115,14 @@ public partial class SlughostMod
         StaticWorld.EstablishRelationship(MyModdedEnums.CreatureTemplateType.SlugcatGhost, CreatureTemplate.Type.RedCentipede, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.Afraid, 1f));
         StaticWorld.EstablishRelationship(CreatureTemplate.Type.PoleMimic, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
         StaticWorld.EstablishRelationship(CreatureTemplate.Type.Spider, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
+        StaticWorld.EstablishRelationship(CreatureTemplate.Type.BigEel, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
+        StaticWorld.EstablishRelationship(CreatureTemplate.Type.TentaclePlant, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
+        StaticWorld.EstablishRelationship(CreatureTemplate.Type.MirosBird, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
+        StaticWorld.EstablishRelationship(CreatureTemplate.Type.Leech, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
+        StaticWorld.EstablishRelationship(CreatureTemplate.Type.SeaLeech, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
         if (ModManager.MSC)
         {
+            StaticWorld.EstablishRelationship(MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.JungleLeech, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
             StaticWorld.EstablishRelationship(MyModdedEnums.CreatureTemplateType.SlugcatGhost, MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.MirosVulture, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.Afraid, 1f));
         }
     }
@@ -128,14 +138,93 @@ public partial class SlughostMod
     }
     #endregion
 
-    //Shader for ghosts
-    /*
-    private void RainWorldOnProcessManagerInitializsation(On.RainWorld.orig_ProcessManagerInitializsation orig, RainWorld self)
+
+    #region MapIcon Code
+    private static Color CreatureSymbolOnColorOfCreature(On.CreatureSymbol.orig_ColorOfCreature orig, IconSymbol.IconSymbolData iconData)
     {
-        orig(self);
+        if (iconData.critType == MyModdedEnums.CreatureTemplateType.SlugcatGhost && iconData.critType.index != -1)
+        {
+            return PlayerGraphics.DefaultSlugcatColor(SlugcatStats.Name.ArenaColor(iconData.intData));
+        }
+        return orig(iconData);
     }
-    */
-    
+
+    private static string CreatureSymbolOnSpriteNameOfCreature(On.CreatureSymbol.orig_SpriteNameOfCreature orig, IconSymbol.IconSymbolData iconData)
+    {
+        if (iconData.critType == MyModdedEnums.CreatureTemplateType.SlugcatGhost && iconData.critType.index != -1)
+        {
+            return "Kill_Slugcat";
+        }
+        return orig(iconData);
+    }
+
+    private static IconSymbol.IconSymbolData CreatureSymbolOnSymbolDataFromCreature(On.CreatureSymbol.orig_SymbolDataFromCreature orig, AbstractCreature creature)
+    {
+        if (creature.creatureTemplate.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost)
+        {
+            return new IconSymbol.IconSymbolData(creature.creatureTemplate.type, AbstractPhysicalObject.AbstractObjectType.Creature, (creature.state as PlayerGhostState).playerNumber);
+        }
+        return orig(creature);
+    }
+
+    void MapILDraw(ILContext il)
+    {
+        try
+        {
+
+            //Adds slugcat ghost check to method to not skip coloring ghost icon
+            var c = new ILCursor(il);
+            var d = new ILCursor(il);
+            c.GotoNext(
+                i => i.MatchLdloc(11),
+                i => i.MatchLdfld<AbstractCreature>(nameof(AbstractCreature.creatureTemplate)),
+                i => i.MatchLdfld<CreatureTemplate>(nameof(CreatureTemplate.type)),
+                i => i.MatchLdsfld<CreatureTemplate.Type>(nameof(CreatureTemplate.Type.Slugcat)),
+                i => i.MatchCall(typeof(ExtEnum<CreatureTemplate.Type>).GetMethod("op_Equality")),
+                i => i.MatchBrfalse(out _)
+                );
+
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Ldloc, 11);
+            c.EmitDelegate((HUD.Map self, AbstractCreature abstractCreature) =>
+            {
+                if (abstractCreature.creatureTemplate.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost)
+                {
+                    self.creatureSymbols[self.creatureSymbols.Count - 1].myColor = RainWorld.PlayerObjectBodyColors[(abstractCreature.realizedCreature as PlayerGhost).playerState.playerNumber];
+                }
+            });
+
+
+            Logger.LogInfo("Position of cursor C: " + c);
+            Logger.LogInfo("Position of cursor D: " + d);
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex);
+        }
+    }
+
+    private static HUD.Map.ItemMarker.ItemMakerData? ItemMakerDataOnDataFromAbstractPhysical(On.HUD.Map.ItemMarker.ItemMakerData.orig_DataFromAbstractPhysical orig, AbstractPhysicalObject obj)
+    {
+        if (obj is AbstractCreature && (obj as AbstractCreature).creatureTemplate.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost)
+        {
+            return null;
+        }
+        return orig(obj);
+    }
+
+    private static HUD.Map.ShelterMarker.ItemInShelterMarker.ItemInShelterData? ItemInShelterDataOnDataFromAbstractPhysical(On.HUD.Map.ShelterMarker.ItemInShelterMarker.ItemInShelterData.orig_DataFromAbstractPhysical orig, AbstractPhysicalObject obj)
+    {
+        if (obj is AbstractCreature && (obj as AbstractCreature).creatureTemplate.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost)
+        {
+            return null;
+        }
+        return orig(obj);
+    }
+    #endregion
+
+
     //Ghost transparency
     private void PlayerGraphicsOnInitiateSprites(On.PlayerGraphics.orig_InitiateSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
     {
@@ -221,13 +310,6 @@ public partial class SlughostMod
         if (!self.Broken)
         {
             forbidGhosts = true;
-            foreach (Player player in self.room.physicalObjects.SelectMany((List<PhysicalObject> x) => x).OfType<Player>())
-            {
-                if (player is PlayerGhost)
-                {
-                    player.slatedForDeletetion = true;
-                }
-            }
         }
         orig(self);
 
@@ -269,6 +351,7 @@ public partial class SlughostMod
             //Creates new ghost if ghost falls off of map into deathpit since it is about to be deleted
             WorldCoordinate spawnCoord = ToPipeOrCam(self);
             CreateGhost(self, spawnCoord);
+            Debug.Log("Ghost destroyed! Creating new ghost!");
         }
         else if (!ModManager.CoopAvailable && !forbidGhosts && !self.isNPC && !self.playerState.isGhost)
         {
@@ -290,12 +373,16 @@ public partial class SlughostMod
             {
                 foreach (AbstractCreature absPlayer in self.room.game.AlivePlayers)
                 {
-                    if ((absPlayer.realizedCreature as Player).playerState.playerNumber == self.playerState.playerNumber)
+                    if (absPlayer.realizedCreature != null && (absPlayer.realizedCreature as Player).playerState.playerNumber == self.playerState.playerNumber)
                     {
                         //Deletes ghost if the player is revived
                         //Need to make a cool deletion effect for this
                         self.slatedForDeletetion = true;
                     }
+                }
+                if (forbidGhosts)
+                {
+                    self.slatedForDeletetion = true;
                 }
             }
 
@@ -326,7 +413,7 @@ public partial class SlughostMod
                 }
 
             }
-            else
+            else if ((self as PlayerGhost).ghostTeleTimer > 0)
             {
                 (self as PlayerGhost).ghostTeleTimer = 0;
             }
@@ -339,6 +426,8 @@ public partial class SlughostMod
                 self.input[0].jmp = false;
             }
 
+            //Makes it so ghosts are not ever considered winning
+            self.readyForWin = false;
         }
     }
 
@@ -363,6 +452,88 @@ public partial class SlughostMod
             return;
         }
         orig(self);
+    }
+
+    private void BigEelOnJawsSnap(On.BigEel.orig_JawsSnap orig, BigEel self)
+    {
+        orig(self);
+        for (int i = 0; i < self.clampedObjects.Count; i++)
+        {
+            if (self.clampedObjects[i].chunk.owner is PlayerGhost)
+            {
+                (self.clampedObjects[i].chunk.owner as PlayerGhost).dead = false;
+                self.clampedObjects.RemoveAt(i);
+                self.clampedObjects.RemoveAt(i);
+            }
+        }
+    }
+
+    private bool MirosBirdAIOnDoIWantToBiteCreature(On.MirosBirdAI.orig_DoIWantToBiteCreature orig, MirosBirdAI self, AbstractCreature creature)
+    {
+        if (creature.creatureTemplate.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost)
+        {
+            return false;
+        }
+        return orig(self, creature);
+    }
+
+    private void MirosBirdOnJawSlamShut(On.MirosBird.orig_JawSlamShut orig, MirosBird self)
+    {
+        orig(self);
+    }
+
+    private void SlugOnBackOnChangeOverlap(On.Player.SlugOnBack.orig_ChangeOverlap orig, Player.SlugOnBack self, bool newOverlap)
+    {
+        orig(self, newOverlap);
+        if(self.slugcat is PlayerGhost)
+        {
+            //Makes sure that when Slugcat Ghost stays not colliding with objects when leaving a slugback
+            self.slugcat.CollideWithObjects = false;
+            self.slugcat.canBeHitByWeapons = false;
+        }
+        
+    }
+
+    void GhostCreatureSedaterILUpdate(ILContext il)
+    {
+        try
+        {
+            
+            //Checks if creature is Slugcat Ghost to skip ghost dream cycle stun 
+            var c = new ILCursor(il);
+            var d = new ILCursor(il);
+            ILLabel skipLabel = d.DefineLabel();
+            c.GotoNext(
+                i => i.MatchLdloc(0),
+                i => i.MatchCallvirt(typeof(List<AbstractCreature>).GetProperty("Item").GetGetMethod()),
+                i => i.MatchLdfld<AbstractCreature>(nameof(AbstractCreature.creatureTemplate)),
+                i => i.MatchLdfld<CreatureTemplate>(nameof(CreatureTemplate.type)),
+                i => i.MatchLdsfld<MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType>(nameof(MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.SlugNPC)),
+                i => i.MatchCall(typeof(ExtEnum<CreatureTemplate.Type>).GetMethod("op_Inequality")),
+                i => i.MatchBrfalse(out _)
+                );
+            d.GotoNext(
+                i => i.MatchLdloc(0),
+                i => i.MatchLdcI4(1),
+                i => i.MatchAdd(),
+                i => i.MatchStloc(0)
+                );
+            d.MarkLabel(skipLabel);
+            c.Index += 7;
+
+            c.Emit(OpCodes.Ldarg_0); //calling self (GhostCreatureSedater)
+            c.Emit(OpCodes.Ldloc_0); //local int32 for loop index
+            c.EmitDelegate((GhostCreatureSedater ghostCreatureSedater, Int32 index) =>
+            {
+                return ghostCreatureSedater.room.abstractRoom.creatures[index].creatureTemplate.type != MyModdedEnums.CreatureTemplateType.SlugcatGhost;
+            });
+            c.Emit(OpCodes.Brfalse, skipLabel);
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex);
+        }
     }
 
 }
