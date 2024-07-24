@@ -52,6 +52,7 @@ public partial class SlughostMod
         newGhost.RealizeInRoom();
     }
 
+
     #region StaticWorld Init
 
     //Initializing SlugcatGhost enum (copies Slugcat's stats)
@@ -137,6 +138,7 @@ public partial class SlughostMod
     }
     #endregion
 
+
     #region MapIcon Code
     private static Color CreatureSymbolOnColorOfCreature(On.CreatureSymbol.orig_ColorOfCreature orig, IconSymbol.IconSymbolData iconData)
     {
@@ -221,6 +223,7 @@ public partial class SlughostMod
         return orig(obj);
     }
     #endregion
+
 
     //Ghost transparency
     private void PlayerGraphicsOnInitiateSprites(On.PlayerGraphics.orig_InitiateSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
@@ -486,6 +489,7 @@ public partial class SlughostMod
         {
             //Makes sure that when Slugcat Ghost stays not colliding with objects when leaving a slugback
             self.slugcat.CollideWithObjects = false;
+            self.slugcat.canBeHitByWeapons = false;
         }
         
     }
@@ -531,94 +535,5 @@ public partial class SlughostMod
             Logger.LogError(ex);
         }
     }
-
-    void DartMaggotILShotUpdate(ILContext il)
-    {
-        try
-        {
-
-            //Checks if creature is Slugcat ghost to avoid spitter spider dart
-            var c = new ILCursor(il);
-            var d = new ILCursor(il);
-            ILLabel skipLabel = d.DefineLabel();
-            c.GotoNext(
-                i => i.MatchLdloc(5),
-                i => i.MatchLdfld<SharedPhysics.CollisionResult>(nameof(SharedPhysics.CollisionResult.chunk)),
-                i => i.MatchCallvirt(typeof(BodyChunk).GetProperty("owner").GetGetMethod()),
-                i => i.MatchIsinst(nameof(TempleGuard)),
-                i => i.MatchBrtrue(out _)
-                );
-            d.GotoNext(
-                i => i.MatchLdarg(0),
-                i => i.MatchCall(typeof(PhysicalObject).GetProperty("firstChunk").GetGetMethod()),
-                i => i.MatchDup(),
-                i => i.MatchLdfld<BodyChunk>(nameof(BodyChunk.pos))
-                );
-            d.MarkLabel(skipLabel);
-            c.Index += 5;
-
-            
-            c.Emit(OpCodes.Ldloc, 5);
-            c.EmitDelegate((SharedPhysics.CollisionResult collisionResult) =>
-            {
-                if (collisionResult.chunk.owner is PlayerGhost)
-                {
-                    return false;
-                }
-                return true;
-            });
-            c.Emit(OpCodes.Brfalse, skipLabel);
-
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex);
-        }
-    }
-
-    void TubeWormTongueILUpdate(ILContext il)
-    {
-        try
-        {
-
-            //Checks if creature is Slugcat ghost to avoid being grabbed by Tubeworms
-            var c = new ILCursor(il);
-            var d = new ILCursor(il);
-            ILLabel skipLabel = d.DefineLabel();
-            c.GotoNext(
-                i => i.MatchStloc(2),
-                i => i.MatchLdloc(2),
-                i => i.MatchLdfld<SharedPhysics.CollisionResult>(nameof(SharedPhysics.CollisionResult.chunk)),
-                i => i.MatchBrfalse(out _)
-                );
-            d.GotoNext(
-                i => i.MatchLdloc(0),
-                i => i.MatchBrtrue(out _),
-                i => i.MatchLdarg(0),
-                i => i.MatchLdfld<TubeWorm.Tongue>(nameof(TubeWorm.Tongue.worm))
-                );
-            d.MarkLabel(skipLabel);
-            c.Index += 4;
-
-            c.Emit(OpCodes.Ldloc_2);
-            c.EmitDelegate((SharedPhysics.CollisionResult collisionResult) =>
-            {
-                if (collisionResult.chunk.owner is PlayerGhost)
-                {
-                    return false;
-                }
-                return true;
-            });
-            c.Emit(OpCodes.Brfalse, skipLabel);
-
-
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex);
-        }
-    }
-
-
 
 }

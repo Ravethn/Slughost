@@ -26,6 +26,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using IL.Stove.Sample.Session;
 using System.Reflection.Emit;
 using On.Stove.Sample.Session;
+using MonoMod.Utils.Cil;
 
 #pragma warning disable CS0618
 
@@ -90,12 +91,13 @@ public partial class SlughostMod : BaseUnityPlugin
             On.MirosBird.JawSlamShut += MirosBirdOnJawSlamShut;
             On.Player.SlugOnBack.ChangeOverlap += SlugOnBackOnChangeOverlap;
             IL.GhostCreatureSedater.Update += GhostCreatureSedaterILUpdate;
-            IL.DartMaggot.ShotUpdate += DartMaggotILShotUpdate;
-            IL.TubeWorm.Tongue.Update += TubeWormTongueILUpdate;
+            //IL.DartMaggot.ShotUpdate += DartMaggotILShotUpdate;
+            //IL.TubeWorm.Tongue.Update += TubeWormTongueILUpdate;
             On.CreatureSymbol.ColorOfCreature += CreatureSymbolOnColorOfCreature;
             On.CreatureSymbol.SpriteNameOfCreature += CreatureSymbolOnSpriteNameOfCreature;
             IL.HUD.Map.Draw += MapILDraw;
             On.HUD.Map.ItemMarker.ItemMakerData.DataFromAbstractPhysical += ItemMakerDataOnDataFromAbstractPhysical;
+            //IL.SharedPhysics.TraceProjectileAgainstBodyChunks += SharedPhysicsILTraceProjectileAgainstBodyChunks;
             On.HUD.Map.ShelterMarker.ItemInShelterMarker.ItemInShelterData.DataFromAbstractPhysical += ItemInShelterDataOnDataFromAbstractPhysical;
 
 

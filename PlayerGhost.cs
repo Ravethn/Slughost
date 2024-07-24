@@ -17,6 +17,7 @@ public class PlayerGhost : Player
         }
         this.abstractCreature.tentacleImmune = true;
         this.objectInStomach = null;
+        this.canBeHitByWeapons = false;
         ghostTeleTimer = 0;
     }
 
