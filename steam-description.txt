@@ -1,0 +1,18 @@
+Paranormal slugcat activity detected, who are we going to call?! This mod spawns a controllable ghost slugcat when a player dies. I made this mod so players who die early in co-op can still move around if they want, hope you like it!
+
+Slug ghosts have a teleportation power if they hold the GRAB button for a couple seconds! The ghost can teleport to the player the camera is following. If the camera is on the ghost itself it sends them to a random entrance to the room instead. If you manage to die somehow as a ghost, teleportation will also revive.
+
+Special ghost powers:
+
+-Artificer can still use their explosive jump / parry!
+
+-Saint can pick up things normally since they are so in tune with the world!
+
+-No other special ghost powers right now, but I got some ideas for cool abilities!
+
+Come check out the github to see the code: https://github.com/Ravethn/Slughost
+Feel free to make your own version of Slughosts or look at how my mod is built here to help make your own! :D
+
+Incompatible mods:
+
+-Individual Food Bars

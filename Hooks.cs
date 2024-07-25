@@ -29,7 +29,7 @@ public partial class SlughostMod
     private static WorldCoordinate ToPipeOrCam(Player self)
     {
         //Sets ghost spawn point to the player with the camera
-        if (self.room.game.RealizedPlayerFollowedByCamera != self && !self.room.game.RealizedPlayerFollowedByCamera.inShortcut && self.room.game.RealizedPlayerFollowedByCamera != null)
+        if (self.room.game.RealizedPlayerFollowedByCamera != null && self.room.game.RealizedPlayerFollowedByCamera.playerState.playerNumber != self.playerState.playerNumber && !self.room.game.RealizedPlayerFollowedByCamera.inShortcut)
         {
             return self.room.game.RealizedPlayerFollowedByCamera.coord;
         }
@@ -353,7 +353,7 @@ public partial class SlughostMod
             CreateGhost(self, spawnCoord);
             Debug.Log("Ghost destroyed! Creating new ghost!");
         }
-        else if (!ModManager.CoopAvailable && !forbidGhosts && !self.isNPC && !self.playerState.isGhost)
+        else if (!ModManager.CoopAvailable && !forbidGhosts && !self.isNPC && !self.playerState.isGhost && !self.playerState.dead)
         {
             //If Jolly coop is off, creates a ghost when a player falls since Player.Destroy without Jolly does not run PermaDie method
             WorldCoordinate spawnCoord2 = ToPipeOrCam(self);
