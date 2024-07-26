@@ -587,4 +587,45 @@ public partial class SlughostMod
         orig(self, noise);
     }
 
+    private void JellyFishILUpdate(ILContext il)
+    {
+        try
+        {
+            var c = new ILCursor(il);
+            var d = new ILCursor(il);
+            ILLabel skipLabel = d.DefineLabel();
+
+            d.GotoNext(
+                i => i.MatchLdloc(14),
+                i => i.MatchLdcI4(1),
+                i => i.MatchAdd(),
+                i => i.MatchStloc(14)
+                );
+
+            d.MarkLabel(skipLabel);
+
+            c.GotoNext(
+                i => i.MatchCallvirt(typeof(AbstractCreature).GetProperty("realizedCreature").GetGetMethod()),
+                i => i.MatchLdfld<UpdatableAndDeletable>(nameof(UpdatableAndDeletable.room)),
+                i => i.MatchLdarg(0),
+                i => i.MatchLdfld<UpdatableAndDeletable>(nameof(UpdatableAndDeletable.room)),
+                i => i.MatchBneUn(out _)
+                );
+            c.Index += 5;
+
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Ldloc, 14);
+            c.EmitDelegate((JellyFish self, int num4) =>
+            {
+                return self.room.abstractRoom.creatures[num4].realizedCreature.Template.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost;
+            });
+            c.Emit(OpCodes.Brtrue, skipLabel);
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex);
+        }
+    }
+
 }

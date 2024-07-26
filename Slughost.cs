@@ -30,6 +30,7 @@ using MonoMod.Utils.Cil;
 using Stove.Sample.Session;
 using Microsoft.Win32.SafeHandles;
 using Unity.Collections;
+using System.Collections;
 
 #pragma warning disable CS0618
 
@@ -102,6 +103,7 @@ public partial class SlughostMod : BaseUnityPlugin
             On.HUD.Map.ShelterMarker.ItemInShelterMarker.ItemInShelterData.DataFromAbstractPhysical += ItemInShelterDataOnDataFromAbstractPhysical;
             IL.MoreSlugcats.StowawayBug.Update += StowawayBugILUpdate;
             On.NoiseTracker.HeardNoise += NoiseTrackerOnHeardNoise;
+            IL.JellyFish.Update += JellyFishILUpdate;
 
 
             On.RainWorldGame.ShutDownProcess += RainWorldGameOnShutDownProcess;
