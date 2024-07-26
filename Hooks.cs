@@ -17,7 +17,7 @@ using UnityEngine;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using System.Net;
-using System.Reflection;
+using IL.Noise;
 
 namespace SlughostMod;
 
@@ -122,6 +122,7 @@ public partial class SlughostMod
         StaticWorld.EstablishRelationship(CreatureTemplate.Type.Leech, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
         StaticWorld.EstablishRelationship(CreatureTemplate.Type.SeaLeech, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
         StaticWorld.EstablishRelationship(CreatureTemplate.Type.DropBug, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
+        StaticWorld.EstablishRelationship(CreatureTemplate.Type.Centipede, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
         if (ModManager.MSC)
         {
             StaticWorld.EstablishRelationship(MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.JungleLeech, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
@@ -575,6 +576,15 @@ public partial class SlughostMod
         {
             Logger.LogError(ex);
         }
+    }
+
+    private void NoiseTrackerOnHeardNoise(On.NoiseTracker.orig_HeardNoise orig, NoiseTracker self, Noise.InGameNoise noise)
+    {
+        if (noise.sourceObject is Creature && (noise.sourceObject as Creature).Template.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost)
+        {
+            return;
+        }
+        orig(self, noise);
     }
 
 }
