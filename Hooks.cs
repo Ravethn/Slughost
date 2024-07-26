@@ -384,6 +384,14 @@ public partial class SlughostMod
                 {
                     self.slatedForDeletetion = true;
                 }
+
+
+                //Stop ghost from being able to eat
+                //Always checked since eating logic continues even while button is not pressed
+                if (self.eatCounter < 15)
+                {
+                    self.eatCounter = 15;
+                }
             }
 
             //Warping ghost to player with camera
@@ -395,8 +403,8 @@ public partial class SlughostMod
                 }
                 //Stop ghost with grabbing ability from swallowing items and accidentally deleting them
                 self.swallowAndRegurgitateCounter = 0;
-                //Stop ghost from being able to eat
-                self.eatCounter = 15;
+                
+                
 
                 //Debug.Log("GhostTeleTimer: " + (self as PlayerGhost).ghostTeleTimer.ToString());
                 if ((self as PlayerGhost).ghostTeleTimer == 60)
