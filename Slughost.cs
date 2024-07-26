@@ -104,6 +104,8 @@ public partial class SlughostMod : BaseUnityPlugin
             IL.MoreSlugcats.StowawayBug.Update += StowawayBugILUpdate;
             On.NoiseTracker.HeardNoise += NoiseTrackerOnHeardNoise;
             IL.JellyFish.Update += JellyFishILUpdate;
+            On.MoreSlugcats.BigJellyFish.ValidGrabCreature += BigJellyFishOnValidGrabCreature;
+            On.MoreSlugcats.BigJellyFish.HeardNoise += BigJellyFishOnHeardNoise;
 
 
             On.RainWorldGame.ShutDownProcess += RainWorldGameOnShutDownProcess;

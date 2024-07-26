@@ -628,4 +628,22 @@ public partial class SlughostMod
         }
     }
 
+    private bool BigJellyFishOnValidGrabCreature(On.MoreSlugcats.BigJellyFish.orig_ValidGrabCreature orig, MoreSlugcats.BigJellyFish self, AbstractCreature abs)
+    {
+        if(abs.creatureTemplate.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost)
+        {
+            return false;
+        }
+        return orig(self, abs);
+    }
+
+    private void BigJellyFishOnHeardNoise(On.MoreSlugcats.BigJellyFish.orig_HeardNoise orig, MoreSlugcats.BigJellyFish self, Noise.InGameNoise noise)
+    {
+        if(noise.sourceObject is Creature && (noise.sourceObject as Creature).Template.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost)
+        {
+            return;
+        }
+        orig(self, noise);
+    }
+
 }
