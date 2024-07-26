@@ -17,6 +17,7 @@ using UnityEngine;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using System.Net;
+using System.Reflection;
 
 namespace SlughostMod;
 
@@ -120,9 +121,11 @@ public partial class SlughostMod
         StaticWorld.EstablishRelationship(CreatureTemplate.Type.MirosBird, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
         StaticWorld.EstablishRelationship(CreatureTemplate.Type.Leech, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
         StaticWorld.EstablishRelationship(CreatureTemplate.Type.SeaLeech, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
+        StaticWorld.EstablishRelationship(CreatureTemplate.Type.DropBug, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
         if (ModManager.MSC)
         {
             StaticWorld.EstablishRelationship(MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.JungleLeech, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
+            StaticWorld.EstablishRelationship(MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.StowawayBug, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
             StaticWorld.EstablishRelationship(MyModdedEnums.CreatureTemplateType.SlugcatGhost, MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.MirosVulture, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.Afraid, 1f));
         }
     }
@@ -167,7 +170,7 @@ public partial class SlughostMod
         return orig(creature);
     }
 
-    void MapILDraw(ILContext il)
+    private void MapILDraw(ILContext il)
     {
         try
         {
@@ -193,10 +196,6 @@ public partial class SlughostMod
                     self.creatureSymbols[self.creatureSymbols.Count - 1].myColor = RainWorld.PlayerObjectBodyColors[(abstractCreature.realizedCreature as PlayerGhost).playerState.playerNumber];
                 }
             });
-
-
-            Logger.LogInfo("Position of cursor C: " + c);
-            Logger.LogInfo("Position of cursor D: " + d);
 
         }
         catch (Exception ex)
@@ -494,7 +493,7 @@ public partial class SlughostMod
         
     }
 
-    void GhostCreatureSedaterILUpdate(ILContext il)
+    private void GhostCreatureSedaterILUpdate(ILContext il)
     {
         try
         {
@@ -528,6 +527,48 @@ public partial class SlughostMod
                 return ghostCreatureSedater.room.abstractRoom.creatures[index].creatureTemplate.type != MyModdedEnums.CreatureTemplateType.SlugcatGhost;
             });
             c.Emit(OpCodes.Brfalse, skipLabel);
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex);
+        }
+    }
+
+    private void StowawayBugILUpdate(ILContext il)
+    {
+        try
+        {
+            var c = new ILCursor(il);
+            var d = new ILCursor(il);
+            ILLabel skipLabel = d.DefineLabel();
+            Type[] matchTypes = new Type[] {typeof(Vector2), typeof(Vector2), typeof(float)};
+            d.GotoNext(
+                i => i.MatchLdloc(10),
+                i => i.MatchLdcI4(1),
+                i => i.MatchAdd(),
+                i => i.MatchStloc(10),
+                i => i.MatchLdarg(0)
+                );
+            d.MarkLabel(skipLabel);
+            c.GotoNext(
+                i => i.MatchLdloc(10),
+                i => i.MatchLdelemRef(),
+                i => i.MatchLdfld<BodyChunk>(nameof(BodyChunk.rad)),
+                i => i.MatchLdcR4(16),
+                i => i.MatchAdd(),
+                i => i.MatchCall(typeof(Custom).GetMethod("DistLess", matchTypes)),
+                i => i.MatchBrfalse(out _)
+                );
+
+            c.Index += 7;
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Ldloc, 9);
+            c.EmitDelegate((MoreSlugcats.StowawayBug self, Int32 num2) =>
+            {
+                return self.room.abstractRoom.creatures[num2].creatureTemplate.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost;
+            });
+            c.Emit(OpCodes.Brtrue, skipLabel);
 
         }
         catch (Exception ex)

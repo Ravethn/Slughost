@@ -98,6 +98,7 @@ public partial class SlughostMod : BaseUnityPlugin
             IL.HUD.Map.Draw += MapILDraw;
             On.HUD.Map.ItemMarker.ItemMakerData.DataFromAbstractPhysical += ItemMakerDataOnDataFromAbstractPhysical;
             On.HUD.Map.ShelterMarker.ItemInShelterMarker.ItemInShelterData.DataFromAbstractPhysical += ItemInShelterDataOnDataFromAbstractPhysical;
+            IL.MoreSlugcats.StowawayBug.Update += StowawayBugILUpdate;
 
 
             On.RainWorldGame.ShutDownProcess += RainWorldGameOnShutDownProcess;
