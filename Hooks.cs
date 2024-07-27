@@ -17,6 +17,7 @@ using UnityEngine;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using System.Net;
+using IL.Noise;
 
 namespace SlughostMod;
 
@@ -29,7 +30,7 @@ public partial class SlughostMod
     private static WorldCoordinate ToPipeOrCam(Player self)
     {
         //Sets ghost spawn point to the player with the camera
-        if (self.room.game.RealizedPlayerFollowedByCamera != self && !self.room.game.RealizedPlayerFollowedByCamera.inShortcut && self.room.game.RealizedPlayerFollowedByCamera != null)
+        if (self.room.game.RealizedPlayerFollowedByCamera != null && self.room.game.RealizedPlayerFollowedByCamera.playerState.playerNumber != self.playerState.playerNumber && !self.room.game.RealizedPlayerFollowedByCamera.inShortcut && !self.abstractCreature.world.game.IsArenaSession)
         {
             return self.room.game.RealizedPlayerFollowedByCamera.coord;
         }
@@ -120,9 +121,12 @@ public partial class SlughostMod
         StaticWorld.EstablishRelationship(CreatureTemplate.Type.MirosBird, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
         StaticWorld.EstablishRelationship(CreatureTemplate.Type.Leech, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
         StaticWorld.EstablishRelationship(CreatureTemplate.Type.SeaLeech, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
+        StaticWorld.EstablishRelationship(CreatureTemplate.Type.DropBug, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
+        StaticWorld.EstablishRelationship(CreatureTemplate.Type.Centipede, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
         if (ModManager.MSC)
         {
             StaticWorld.EstablishRelationship(MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.JungleLeech, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
+            StaticWorld.EstablishRelationship(MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.StowawayBug, MyModdedEnums.CreatureTemplateType.SlugcatGhost, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.DoesntTrack, 1f));
             StaticWorld.EstablishRelationship(MyModdedEnums.CreatureTemplateType.SlugcatGhost, MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.MirosVulture, new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.Afraid, 1f));
         }
     }
@@ -167,7 +171,7 @@ public partial class SlughostMod
         return orig(creature);
     }
 
-    void MapILDraw(ILContext il)
+    private void MapILDraw(ILContext il)
     {
         try
         {
@@ -193,10 +197,6 @@ public partial class SlughostMod
                     self.creatureSymbols[self.creatureSymbols.Count - 1].myColor = RainWorld.PlayerObjectBodyColors[(abstractCreature.realizedCreature as PlayerGhost).playerState.playerNumber];
                 }
             });
-
-
-            Logger.LogInfo("Position of cursor C: " + c);
-            Logger.LogInfo("Position of cursor D: " + d);
 
         }
         catch (Exception ex)
@@ -353,7 +353,7 @@ public partial class SlughostMod
             CreateGhost(self, spawnCoord);
             Debug.Log("Ghost destroyed! Creating new ghost!");
         }
-        else if (!ModManager.CoopAvailable && !forbidGhosts && !self.isNPC && !self.playerState.isGhost)
+        else if (!ModManager.CoopAvailable && !forbidGhosts && !self.isNPC && !self.playerState.isGhost && !self.playerState.dead)
         {
             //If Jolly coop is off, creates a ghost when a player falls since Player.Destroy without Jolly does not run PermaDie method
             WorldCoordinate spawnCoord2 = ToPipeOrCam(self);
@@ -384,6 +384,14 @@ public partial class SlughostMod
                 {
                     self.slatedForDeletetion = true;
                 }
+
+
+                //Stop ghost from being able to eat
+                //Always checked since eating logic continues even while button is not pressed
+                if (self.eatCounter < 15)
+                {
+                    self.eatCounter = 15;
+                }
             }
 
             //Warping ghost to player with camera
@@ -395,8 +403,8 @@ public partial class SlughostMod
                 }
                 //Stop ghost with grabbing ability from swallowing items and accidentally deleting them
                 self.swallowAndRegurgitateCounter = 0;
-                //Stop ghost from being able to eat
-                self.eatCounter = 15;
+                
+                
 
                 //Debug.Log("GhostTeleTimer: " + (self as PlayerGhost).ghostTeleTimer.ToString());
                 if ((self as PlayerGhost).ghostTeleTimer == 60)
@@ -494,7 +502,7 @@ public partial class SlughostMod
         
     }
 
-    void GhostCreatureSedaterILUpdate(ILContext il)
+    private void GhostCreatureSedaterILUpdate(ILContext il)
     {
         try
         {
@@ -534,6 +542,116 @@ public partial class SlughostMod
         {
             Logger.LogError(ex);
         }
+    }
+
+    private void StowawayBugILUpdate(ILContext il)
+    {
+        try
+        {
+            var c = new ILCursor(il);
+            var d = new ILCursor(il);
+            ILLabel skipLabel = d.DefineLabel();
+            Type[] matchTypes = new Type[] {typeof(Vector2), typeof(Vector2), typeof(float)};
+            d.GotoNext(
+                i => i.MatchLdloc(10),
+                i => i.MatchLdcI4(1),
+                i => i.MatchAdd(),
+                i => i.MatchStloc(10),
+                i => i.MatchLdarg(0)
+                );
+            d.MarkLabel(skipLabel);
+            c.GotoNext(
+                i => i.MatchLdloc(10),
+                i => i.MatchLdelemRef(),
+                i => i.MatchLdfld<BodyChunk>(nameof(BodyChunk.rad)),
+                i => i.MatchLdcR4(16),
+                i => i.MatchAdd(),
+                i => i.MatchCall(typeof(Custom).GetMethod("DistLess", matchTypes)),
+                i => i.MatchBrfalse(out _)
+                );
+
+            c.Index += 7;
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Ldloc, 9);
+            c.EmitDelegate((MoreSlugcats.StowawayBug self, Int32 num2) =>
+            {
+                return self.room.abstractRoom.creatures[num2].creatureTemplate.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost;
+            });
+            c.Emit(OpCodes.Brtrue, skipLabel);
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex);
+        }
+    }
+
+    private void NoiseTrackerOnHeardNoise(On.NoiseTracker.orig_HeardNoise orig, NoiseTracker self, Noise.InGameNoise noise)
+    {
+        if (noise.sourceObject is Creature && (noise.sourceObject as Creature).Template.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost)
+        {
+            return;
+        }
+        orig(self, noise);
+    }
+
+    private void JellyFishILUpdate(ILContext il)
+    {
+        try
+        {
+            var c = new ILCursor(il);
+            var d = new ILCursor(il);
+            ILLabel skipLabel = d.DefineLabel();
+
+            d.GotoNext(
+                i => i.MatchLdloc(14),
+                i => i.MatchLdcI4(1),
+                i => i.MatchAdd(),
+                i => i.MatchStloc(14)
+                );
+
+            d.MarkLabel(skipLabel);
+
+            c.GotoNext(
+                i => i.MatchCallvirt(typeof(AbstractCreature).GetProperty("realizedCreature").GetGetMethod()),
+                i => i.MatchLdfld<UpdatableAndDeletable>(nameof(UpdatableAndDeletable.room)),
+                i => i.MatchLdarg(0),
+                i => i.MatchLdfld<UpdatableAndDeletable>(nameof(UpdatableAndDeletable.room)),
+                i => i.MatchBneUn(out _)
+                );
+            c.Index += 5;
+
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Ldloc, 14);
+            c.EmitDelegate((JellyFish self, int num4) =>
+            {
+                return self.room.abstractRoom.creatures[num4].realizedCreature.Template.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost;
+            });
+            c.Emit(OpCodes.Brtrue, skipLabel);
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex);
+        }
+    }
+
+    private bool BigJellyFishOnValidGrabCreature(On.MoreSlugcats.BigJellyFish.orig_ValidGrabCreature orig, MoreSlugcats.BigJellyFish self, AbstractCreature abs)
+    {
+        if(abs.creatureTemplate.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost)
+        {
+            return false;
+        }
+        return orig(self, abs);
+    }
+
+    private void BigJellyFishOnHeardNoise(On.MoreSlugcats.BigJellyFish.orig_HeardNoise orig, MoreSlugcats.BigJellyFish self, Noise.InGameNoise noise)
+    {
+        if(noise.sourceObject is Creature && (noise.sourceObject as Creature).Template.type == MyModdedEnums.CreatureTemplateType.SlugcatGhost)
+        {
+            return;
+        }
+        orig(self, noise);
     }
 
 }

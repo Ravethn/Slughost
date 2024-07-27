@@ -27,6 +27,10 @@ using IL.Stove.Sample.Session;
 using System.Reflection.Emit;
 using On.Stove.Sample.Session;
 using MonoMod.Utils.Cil;
+using Stove.Sample.Session;
+using Microsoft.Win32.SafeHandles;
+using Unity.Collections;
+using System.Collections;
 
 #pragma warning disable CS0618
 
@@ -35,7 +39,7 @@ using MonoMod.Utils.Cil;
 
 namespace SlughostMod;
 
-[BepInPlugin("Ravethn.Slughost", "Slughosts", "1.0.3")]
+[BepInPlugin("Ravethn.Slughost", "Slughosts", "1.0.4")]
 public partial class SlughostMod : BaseUnityPlugin
 {
     private SlughostModOptions Options;
@@ -91,14 +95,17 @@ public partial class SlughostMod : BaseUnityPlugin
             On.MirosBird.JawSlamShut += MirosBirdOnJawSlamShut;
             On.Player.SlugOnBack.ChangeOverlap += SlugOnBackOnChangeOverlap;
             IL.GhostCreatureSedater.Update += GhostCreatureSedaterILUpdate;
-            //IL.DartMaggot.ShotUpdate += DartMaggotILShotUpdate;
-            //IL.TubeWorm.Tongue.Update += TubeWormTongueILUpdate;
             On.CreatureSymbol.ColorOfCreature += CreatureSymbolOnColorOfCreature;
             On.CreatureSymbol.SpriteNameOfCreature += CreatureSymbolOnSpriteNameOfCreature;
+            On.CreatureSymbol.SymbolDataFromCreature += CreatureSymbolOnSymbolDataFromCreature;
             IL.HUD.Map.Draw += MapILDraw;
             On.HUD.Map.ItemMarker.ItemMakerData.DataFromAbstractPhysical += ItemMakerDataOnDataFromAbstractPhysical;
-            //IL.SharedPhysics.TraceProjectileAgainstBodyChunks += SharedPhysicsILTraceProjectileAgainstBodyChunks;
             On.HUD.Map.ShelterMarker.ItemInShelterMarker.ItemInShelterData.DataFromAbstractPhysical += ItemInShelterDataOnDataFromAbstractPhysical;
+            IL.MoreSlugcats.StowawayBug.Update += StowawayBugILUpdate;
+            On.NoiseTracker.HeardNoise += NoiseTrackerOnHeardNoise;
+            IL.JellyFish.Update += JellyFishILUpdate;
+            On.MoreSlugcats.BigJellyFish.ValidGrabCreature += BigJellyFishOnValidGrabCreature;
+            On.MoreSlugcats.BigJellyFish.HeardNoise += BigJellyFishOnHeardNoise;
 
 
             On.RainWorldGame.ShutDownProcess += RainWorldGameOnShutDownProcess;

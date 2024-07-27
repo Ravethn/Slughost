@@ -1,9 +1,9 @@
 {
   "id": "Ravethn.Slughost",
   "name": "Slughosts",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "authors": "Ravethn",
-  "description": "Play as a ghost after dying.",
+  "description": "Play as a ghost after dying!",
   "requirements": [],
   "requirements_names": [],
   "checksum_override_version": true
