@@ -30,7 +30,7 @@ public partial class SlughostMod
     private static WorldCoordinate ToPipeOrCam(Player self)
     {
         //Sets ghost spawn point to the player with the camera
-        if (self.room.game.RealizedPlayerFollowedByCamera != null && self.room.game.RealizedPlayerFollowedByCamera.playerState.playerNumber != self.playerState.playerNumber && !self.room.game.RealizedPlayerFollowedByCamera.inShortcut)
+        if (self.room.game.RealizedPlayerFollowedByCamera != null && self.room.game.RealizedPlayerFollowedByCamera.playerState.playerNumber != self.playerState.playerNumber && !self.room.game.RealizedPlayerFollowedByCamera.inShortcut && !self.abstractCreature.world.game.IsArenaSession)
         {
             return self.room.game.RealizedPlayerFollowedByCamera.coord;
         }
