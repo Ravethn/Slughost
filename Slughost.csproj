@@ -3,95 +3,96 @@
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
     <LangVersion>11</LangVersion>
+    <BaseOutputPath></BaseOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>lib\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="0Harmony20">
-      <HintPath>D:\Tools\Rain World Reference\0Harmony20.dll</HintPath>
+      <HintPath>lib\0Harmony20.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>D:\Tools\Rain World Reference\Assembly-CSharp-firstpass.dll</HintPath>
+      <HintPath>lib\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="BepInEx">
-      <HintPath>D:\Tools\Rain World Reference\BepInEx.dll</HintPath>
+      <HintPath>lib\BepInEx.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="BepInEx.Harmony">
-      <HintPath>D:\Tools\Rain World Reference\BepInEx.Harmony.dll</HintPath>
+      <HintPath>lib\BepInEx.Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="BepInEx.Preloader">
-      <HintPath>D:\Tools\Rain World Reference\BepInEx.Preloader.dll</HintPath>
+      <HintPath>lib\BepInEx.Preloader.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="com.rlabrecque.steamworks.net">
-      <HintPath>D:\Tools\Rain World Reference\com.rlabrecque.steamworks.net.dll</HintPath>
+      <HintPath>lib\com.rlabrecque.steamworks.net.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="GoKit">
-      <HintPath>D:\Tools\Rain World Reference\GoKit.dll</HintPath>
+      <HintPath>lib\GoKit.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="HarmonyXInterop">
-      <HintPath>D:\Tools\Rain World Reference\HarmonyXInterop.dll</HintPath>
+      <HintPath>lib\HarmonyXInterop.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="HOOKS-Assembly-CSharp">
-      <HintPath>D:\Tools\Rain World Reference\HOOKS-Assembly-CSharp.dll</HintPath>
+      <HintPath>lib\HOOKS-Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Mono.Cecil">
-      <HintPath>D:\Tools\Rain World Reference\Mono.Cecil.dll</HintPath>
+      <HintPath>lib\Mono.Cecil.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Mono.Cecil.Mdb">
-      <HintPath>D:\Tools\Rain World Reference\Mono.Cecil.Mdb.dll</HintPath>
+      <HintPath>lib\Mono.Cecil.Mdb.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Mono.Cecil.Pdb">
-      <HintPath>D:\Tools\Rain World Reference\Mono.Cecil.Pdb.dll</HintPath>
+      <HintPath>lib\Mono.Cecil.Pdb.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Mono.Cecil.Rocks">
-      <HintPath>D:\Tools\Rain World Reference\Mono.Cecil.Rocks.dll</HintPath>
+      <HintPath>lib\Mono.Cecil.Rocks.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MonoMod">
-      <HintPath>D:\Tools\Rain World Reference\MonoMod.dll</HintPath>
+      <HintPath>lib\MonoMod.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MonoMod.RuntimeDetour">
-      <HintPath>D:\Tools\Rain World Reference\MonoMod.RuntimeDetour.dll</HintPath>
+      <HintPath>lib\MonoMod.RuntimeDetour.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MonoMod.Utils">
-      <HintPath>D:\Tools\Rain World Reference\MonoMod.Utils.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>D:\Tools\Rain World Reference\Newtonsoft.Json.dll</HintPath>
+      <HintPath>lib\MonoMod.Utils.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>D:\Tools\Rain World Reference\PUBLIC-Assembly-CSharp.dll</HintPath>
+      <HintPath>lib\PUBLIC-Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>D:\Tools\Rain World Reference\UnityEngine.dll</HintPath>
+      <HintPath>lib\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>D:\Tools\Rain World Reference\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>lib\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.ImageConversionModule">
-      <HintPath>D:\Tools\Rain World Reference\UnityEngine.ImageConversionModule.dll</HintPath>
+      <HintPath>lib\UnityEngine.ImageConversionModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>D:\Tools\Rain World Reference\UnityEngine.InputLegacyModule.dll</HintPath>
+      <HintPath>lib\UnityEngine.InputLegacyModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
