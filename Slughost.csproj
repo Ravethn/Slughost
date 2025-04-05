@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>lib\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="0Harmony20">
       <HintPath>D:\Tools\Rain World Reference\0Harmony20.dll</HintPath>
       <Private>False</Private>
@@ -70,12 +74,8 @@
       <HintPath>D:\Tools\Rain World Reference\MonoMod.Utils.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>D:\Tools\Rain World Reference\Newtonsoft.Json.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>D:\Tools\Rain World Reference\PUBLIC-Assembly-CSharp.dll</HintPath>
+      <HintPath>lib\PUBLIC-Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine">
@@ -141,6 +141,7 @@
   <ItemGroup>
     <Reference Update="System.Xml">
       <Private>False</Private>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
   </ItemGroup>
 
