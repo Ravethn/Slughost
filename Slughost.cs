@@ -11,7 +11,6 @@ using Debug = UnityEngine.Debug;
 using System.Data.SqlClient;
 using UnityEngine.Rendering;
 using System.Runtime.Serialization;
-using Newtonsoft.Json.Serialization;
 using IL.Menu.Remix.MixedUI;
 using Menu.Remix.MixedUI;
 using On.Menu.Remix.MixedUI;
@@ -39,7 +38,7 @@ using System.Collections;
 
 namespace SlughostMod;
 
-[BepInPlugin("Ravethn.Slughost", "Slughosts", "1.0.4")]
+[BepInPlugin("Ravethn.Slughost", "Slughosts", "1.0.5")]
 public partial class SlughostMod : BaseUnityPlugin
 {
     private SlughostModOptions Options;
