@@ -26,6 +26,11 @@ public class PlayerGhost : Player
     {
         //JollyCustom.WarpAndRevivePlayer()
         //
+        if(self == null || newRoom == null)
+        {
+            return;
+        }
+        UnityEngine.Debug.Log("Warping ghost!");
         if (self.playerState.permaDead && self != null && self.room != null)
         {
             //Debug.Log("1");
@@ -53,10 +58,10 @@ public class PlayerGhost : Player
             
 
         }
-        if(self == null || self.room == null || self.playerState.permaDead || self.abstractCreature.world != newRoom.world)
+        if(self.playerState.permaDead || self.abstractCreature.world != newRoom.world)
         {
             //Debug.Log("2");
-            
+
             if(self.abstractCreature.world != newRoom.world)
             {
                 self.abstractCreature.world = newRoom.world;
@@ -83,25 +88,27 @@ public class PlayerGhost : Player
             self.room.RemoveObject(self);
             self.abstractCreature.Move(position);
             self.PlaceInRoom(newRoom.realizedRoom);
-            Debug.Log("Ghost teleported from another room!");
+            UnityEngine.Debug.Log("Ghost teleported from another room!");
             
         }
         //If ghost is in the same room
         else if (self.abstractCreature.Room.name == newRoom.name && newRoom.realizedRoom != null)
         {
-            if (self.firstChunk.pos != self.room.game.RealizedPlayerFollowedByCamera.firstChunk.pos)
-            {
-                Debug.Log("Ghost tp to camera in same room");
-                for (int i = 0; i < self.bodyChunks.Length; i++)
-                {
-                    self.bodyChunks[i].pos = self.room.game.RealizedPlayerFollowedByCamera.firstChunk.pos;
-                }
-            }
-            else if (newRoom.realizedRoom != null)
-            {
-                Debug.Log("Ghost tp to shortcut spot");
-                self.SpitOutOfShortCut(new RWCustom.IntVector2(position.x, position.y), newRoom.realizedRoom, false);
-            }
+            //Spits player out at position from ToPipeOrCam
+            UnityEngine.Debug.Log("Ghost tp to same room");
+            self.SpitOutOfShortCut(new RWCustom.IntVector2(position.x, position.y), newRoom.realizedRoom, false);
+            //Convert WorldCoordinate into screen coord
+            //Vector2 target = self.room.MiddleOfTile(position.Tile);
+            //for (int i = 0; i < self.bodyChunks.Length; i++)
+            //{
+            //    self.bodyChunks[i].HardSetPosition(target);
+            //}
+
+            //else if (newRoom.realizedRoom != null)
+            //{
+            //    UnityEngine.Debug.Log("Ghost tp to shortcut spot");
+            //    self.SpitOutOfShortCut(new RWCustom.IntVector2(position.x, position.y), newRoom.realizedRoom, false);
+            //}
 
 
         }

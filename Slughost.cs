@@ -30,6 +30,13 @@ using Stove.Sample.Session;
 using Microsoft.Win32.SafeHandles;
 using Unity.Collections;
 using System.Collections;
+using System.ComponentModel;
+using System.Dynamic;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Collections.ObjectModel;
+using Mono.Collections.Generic;
+using System.Data;
 
 #pragma warning disable CS0618
 
@@ -85,6 +92,7 @@ public partial class SlughostMod : BaseUnityPlugin
             On.RainWorldGame.ctor += RainWorldGameOnctor;
             On.Player.Destroy += PlayerOnDestroy;
             On.Player.Update += PlayerOnUpdate;
+            On.RoomCamera.ChangeCameraToPlayer += RoomCameraOnChangeCameraToPlayer;
             On.Player.LungUpdate += PlayerOnLungUpdate;
             On.Weapon.HitThisObject += WeaponOnHitThisObject;
             On.PlayerGraphics.TailSpeckles.setSpearProgress += PlayerGraphicsOnSetSpearProgress;

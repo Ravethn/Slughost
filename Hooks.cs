@@ -27,16 +27,54 @@ public partial class SlughostMod
     //Used to prevent ghosts from spawning and being saved in shelters
     private bool forbidGhosts = false;
 
-    private static WorldCoordinate ToPipeOrCam(Player self)
+    private static float GetCoordDistance(WorldCoordinate from, WorldCoordinate to)
     {
-        //Sets ghost spawn point to the player with the camera
-        if (self.room.game.RealizedPlayerFollowedByCamera != null && self.room.game.RealizedPlayerFollowedByCamera.playerState.playerNumber != self.playerState.playerNumber && !self.room.game.RealizedPlayerFollowedByCamera.inShortcut && !self.abstractCreature.world.game.IsArenaSession)
+        if(from.room == to.room)
         {
-            return self.room.game.RealizedPlayerFollowedByCamera.coord;
+            return (float)Math.Sqrt(Math.Pow(to.x - from.x, 2) + Math.Pow(to.y - from.y, 2));
         }
         else
         {
-            //Spawn ghost at random room entrance if there are no alive players or camera is on self
+            return -1;
+        }
+    }
+
+    private static WorldCoordinate ToPipeOrCam(Player self)
+    {
+        RainWorldGame rainWorldGame = self.room.game;
+        //Sets ghost spawn point to the player with the camera
+        if (rainWorldGame.RealizedPlayerFollowedByCamera != null && rainWorldGame.RealizedPlayerFollowedByCamera.playerState.playerNumber != self.playerState.playerNumber && !rainWorldGame.RealizedPlayerFollowedByCamera.inShortcut && !self.abstractCreature.world.game.IsArenaSession)
+        {
+            return rainWorldGame.RealizedPlayerFollowedByCamera.coord;
+        }
+        else
+        {
+            WorldCoordinate selfCoord = new WorldCoordinate(self.abstractCreature.pos.room, self.abstractCreature.pos.x, self.abstractCreature.pos.y, 0);
+            UnityEngine.Debug.Log("Ghost current coord: " + selfCoord.ToString());
+            //Moves ghost to the nearest room connection if cannot go to camera
+
+            //Gets location of nearest room exit
+            float smallestDist = 0;
+            int? smallestIndex = null;
+            for(int i = 0; i < self.room.shortcuts.Length; i++)
+            {
+                WorldCoordinate shortcutCoord = self.room.shortcuts[i].startCoord;
+                UnityEngine.Debug.Log("Exit #" + i + " coords: " + shortcutCoord.ToString());
+                float distance = GetCoordDistance(selfCoord, shortcutCoord);
+                if (smallestDist == 0 || (distance <= smallestDist && distance > 0))
+                {
+                    UnityEngine.Debug.Log("Smallest distance is: " + smallestDist + " to exit: " + smallestIndex);
+                    smallestDist = distance;
+                    smallestIndex = i;
+                }
+            }
+            if (smallestIndex != null)
+            {
+                //Ghost goes to the found nearest exit
+                return self.room.LocalCoordinateOfNode(self.room.abstractRoom.ExitIndex(self.room.abstractRoom.connections[(int)smallestIndex]));
+            }
+
+            //Otherwise, go to random exit
             return self.room.LocalCoordinateOfNode(self.room.abstractRoom.ExitIndex(self.room.abstractRoom.connections[UnityEngine.Random.Range(0, self.room.abstractRoom.connections.Length)]));
         }
     }
@@ -229,7 +267,7 @@ public partial class SlughostMod
     private void PlayerGraphicsOnInitiateSprites(On.PlayerGraphics.orig_InitiateSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
     {
         orig(self, sLeaser, rCam);
-        if (self.player is PlayerGhost && !rCam.room.game.DEBUGMODE)
+        if (self.player is PlayerGhost)
         {
             for (int ghostSprite = 0; ghostSprite < 9; ghostSprite++)
             {
@@ -351,7 +389,7 @@ public partial class SlughostMod
             //Creates new ghost if ghost falls off of map into deathpit since it is about to be deleted
             WorldCoordinate spawnCoord = ToPipeOrCam(self);
             CreateGhost(self, spawnCoord);
-            Debug.Log("Ghost destroyed! Creating new ghost!");
+            UnityEngine.Debug.Log("Ghost destroyed! Creating new ghost!");
         }
         else if (!ModManager.CoopAvailable && !forbidGhosts && !self.isNPC && !self.playerState.isGhost && !self.playerState.dead)
         {
@@ -397,19 +435,23 @@ public partial class SlughostMod
             //Warping ghost to player with camera
             if (IsGhostTeleportPressed(self as PlayerGhost))
             {
-                if((self as PlayerGhost).ghostTeleTimer <= 60)
+                if((self as PlayerGhost).ghostTeleTimer <= 45)
                 {
                     (self as PlayerGhost).ghostTeleTimer++;
+                    if((self as PlayerGhost).ghostTeleTimer > 15)
+                    {
+                        self.Blink(5);
+                    }
                 }
-                //Stop ghost with grabbing ability from swallowing items and accidentally deleting them
-                self.swallowAndRegurgitateCounter = 0;
+                    //Stop ghost with grabbing ability from swallowing items and accidentally deleting them
+                    self.swallowAndRegurgitateCounter = 0;
                 
                 
 
                 //Debug.Log("GhostTeleTimer: " + (self as PlayerGhost).ghostTeleTimer.ToString());
-                if ((self as PlayerGhost).ghostTeleTimer == 60)
+                if ((self as PlayerGhost).ghostTeleTimer == 45)
                 {
-                    if(self.room.game.RealizedPlayerFollowedByCamera != self && !self.room.game.RealizedPlayerFollowedByCamera.inShortcut && self.room.game.RealizedPlayerFollowedByCamera != null)
+                    if (self.room.game.RealizedPlayerFollowedByCamera != self && !self.room.game.RealizedPlayerFollowedByCamera.inShortcut && self.room.game.RealizedPlayerFollowedByCamera != null)
                     {
                         PlayerGhost.WarpAndReviveGhost(self as PlayerGhost, self.room.game.RealizedPlayerFollowedByCamera.room.abstractRoom, ToPipeOrCam(self));
                     }
@@ -417,7 +459,21 @@ public partial class SlughostMod
                     {
                         PlayerGhost.WarpAndReviveGhost(self as PlayerGhost, self.room.abstractRoom, ToPipeOrCam(self));
                     }
-                    
+
+
+                    Color playerColor = RainWorld.PlayerObjectBodyColors[self.playerState.playerNumber];
+                    Vector2 playerPos = self.mainBodyChunk.pos;
+                    //Teleporting effects
+                    self.room.PlaySound(SoundID.Overseer_Image_Big_Flicker, playerPos, UnityEngine.Random.Range(1.2f, 1.6f), 1f, self.abstractCreature);
+                    self.room.PlaySound(SoundID.Player_Tick_Along_In_Shortcut, playerPos, 2f, 1f, self.abstractCreature);
+                    self.room.AddObject(new ShockWave(self.bodyChunks[1].pos, 80f, UnityEngine.Random.Range(0.01f, 0.05f), 7, false));
+                    for(int i = 0; i < 10; i++)
+                    {
+                        //Arti-sparks
+                        Vector2 angle = Custom.RNV();
+                        self.room.AddObject(new Spark(playerPos + angle * (UnityEngine.Random.value * 40f), angle * Mathf.Lerp(4f, 30f, UnityEngine.Random.value), playerColor, null, 4, 18));
+                    }
+
                 }
 
             }
@@ -437,6 +493,27 @@ public partial class SlughostMod
             //Makes it so ghosts are not ever considered winning
             self.readyForWin = false;
         }
+    }
+
+    private void RoomCameraOnChangeCameraToPlayer(On.RoomCamera.orig_ChangeCameraToPlayer orig, RoomCamera self, AbstractCreature cameraTarget)
+    {
+        if(cameraTarget != null && cameraTarget.realizedCreature != null)
+        {
+            if(cameraTarget.realizedCreature is PlayerGhost)
+            {
+                Player ghost = cameraTarget.realizedCreature as Player;
+                if (Custom.rainWorld.options.cameraCycling)
+                {
+                    int index = (ghost.playerState.playerNumber + 1) % cameraTarget.world.game.session.Players.Count<AbstractCreature>();
+                    cameraTarget = cameraTarget.world.game.Players[index];
+                }
+                else
+                {
+                    cameraTarget = null;
+                }
+            }
+        }
+        orig(self, cameraTarget);
     }
 
     
