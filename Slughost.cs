@@ -1,42 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Security;
 using System.Security.Permissions;
-using UnityEngine;
-using RWCustom;
 using BepInEx;
-using Debug = UnityEngine.Debug;
-using System.Data.SqlClient;
-using UnityEngine.Rendering;
-using System.Runtime.Serialization;
-using IL.Menu.Remix.MixedUI;
-using Menu.Remix.MixedUI;
-using On.Menu.Remix.MixedUI;
-using System.Runtime.Remoting.Messaging;
-using MonoMod.RuntimeDetour;
-using System.Xml;
-using MonoMod.Cil;
-using System.Runtime.Remoting.Lifetime;
-using Steamworks;
-using MonoMod;
-using Unity.Collections.LowLevel.Unsafe;
-using IL.Stove.Sample.Session;
-using System.Reflection.Emit;
-using On.Stove.Sample.Session;
-using MonoMod.Utils.Cil;
-using Stove.Sample.Session;
-using Microsoft.Win32.SafeHandles;
-using Unity.Collections;
-using System.Collections;
-using System.ComponentModel;
-using System.Dynamic;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Collections.ObjectModel;
-using Mono.Collections.Generic;
-using System.Data;
 
 #pragma warning disable CS0618
 
@@ -86,6 +51,7 @@ public partial class SlughostMod : BaseUnityPlugin
             On.StaticWorld.InitStaticWorld += StaticWorldOnInitStaticWorld;
             On.AbstractCreature.Realize += AbstractCreatureOnRealize;
             On.PlayerGraphics.InitiateSprites += PlayerGraphicsOnInitiateSprites;
+            //On.Player.InitiateGraphicsModule += PlayerOnInitiateGraphicsModule;
             On.Player.Die += PlayerOnDie;
             On.Player.Grabability += PlayerOnGrabability;
             On.ShelterDoor.Close += ShelterDoorOnClose;
