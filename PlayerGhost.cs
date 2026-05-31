@@ -1,12 +1,17 @@
 ﻿using System.Collections.Generic;
+using static SlughostMod.SlughostMod;
 namespace SlughostMod;
 
-public class PlayerGhost : Player
+public class PlayerGhost : Player, INotifyWhenRoomUnloaded
 {
     public int ghostTeleTimer;
+    public float flickerFactor;
+    public bool destroyRespawn;
     
     public PlayerGhost(AbstractCreature abstractCreature, World world) : base(abstractCreature, world)
     {
+
+        this.destroyRespawn = true;
         foreach (var chunk in bodyChunks)
         {
             chunk.collideWithObjects = false;
@@ -15,6 +20,27 @@ public class PlayerGhost : Player
         this.objectInStomach = null;
         this.canBeHitByWeapons = false;
         ghostTeleTimer = 0;
+        this.glowing = false;
+    }
+
+    ~PlayerGhost()
+    {
+        if(this.abstractCreature != null)
+        {
+            currentGhosts.Remove(this.abstractCreature);
+        }
+    }
+
+    public void RoomUnloaded()
+    {
+        if(this.room != null)
+        {
+            this.room.RemoveObject(this);
+            this.abstractCreature.Room.RemoveEntity(this.abstractCreature);
+        }
+        CamCoordGetter to = new CamCoordGetter(this);
+        CreateGhost(this, to.coord, to.world);
+        //UnityEngine.Debug.Log("Scughost: My room unloaded!");
     }
 
     //public override void Abstractize()
@@ -24,20 +50,20 @@ public class PlayerGhost : Player
     //    base.Abstractize();
     //}
 
-    public void WarpAndRevive(WorldCoordinate tCoord)
+    public void WarpAndRevive(WorldCoordinate toCoord, World toWorld)
     {
         AbstractCreature absGhost = this.abstractCreature;
-        AbstractRoom room = absGhost.Room;
-        AbstractRoom newRoom = absGhost.world.GetAbstractRoom(tCoord.room);
+        AbstractRoom absRoom = absGhost.Room;
+        AbstractRoom newRoom = toWorld.GetAbstractRoom(toCoord.room);
         if (newRoom == null)
         {
             UnityEngine.Debug.Log("Tried to send ghost to null room!");
             return;
         }
-        if (this.room != null && this.playerState.permaDead) //Drop items before
+        if (this.room != null && absRoom != newRoom) 
         {
-            this.LoseAllGrasps();
-            List<AbstractPhysicalObject> allConnectedObjects = absGhost.GetAllConnectedObjects();
+            this.LoseAllGrasps(); //Drop items before
+            List<AbstractPhysicalObject> allConnectedObjects = absGhost.GetAllConnectedObjects(); //Removing realizedCreature from room
             for (int i = 0; i < allConnectedObjects.Count; i++)
             {
                 if (allConnectedObjects[i].realizedObject != null)
@@ -45,43 +71,68 @@ public class PlayerGhost : Player
                     this.room.RemoveObject(allConnectedObjects[i].realizedObject);
                 }
             }
-            if(this.room != null) //have to recheck null room in case it was connected to absGhost
+            if(this.room != null)
             {
                 this.room.RemoveObject(this);
             }
-        }
-        if(this.room == null || room == null || this.playerState.permaDead || absGhost.world != newRoom.world || room.name != newRoom.name) //Different room or null
-        {
-            UnityEngine.Debug.Log("Reviving null / other room ghost to " + newRoom.name);
-            if(absGhost.world != newRoom.world)
+            UnityEngine.Debug.Log("Warping ghost ghost to " + newRoom.name);
+            if (absGhost.world != newRoom.world)
             {
                 absGhost.world = newRoom.world;
-                absGhost.pos = tCoord;
+                absGhost.pos = toCoord;
             }
-            if (room != null)
+            if (absRoom != null)
             {
-                room.RemoveEntity(absGhost);
+                absRoom.RemoveEntity(absGhost);
             }
             newRoom.AddEntity(absGhost);
-            absGhost.Move(tCoord);
+            absGhost.Move(toCoord);
             if (newRoom.realizedRoom == null)
             {
                 newRoom.world.ActivateRoom(newRoom);
             }
             this.PlaceInRoom(newRoom.realizedRoom);
         }
-        else //Same room
+        else
         {
-            if (newRoom.realizedRoom == null)
+            if(newRoom.realizedRoom == null)
             {
                 newRoom.world.ActivateRoom(newRoom);
             }
-            //Spits player out at position chosen coord (room exit or camera followed player)
-            UnityEngine.Debug.Log("Ghost tp to same room");
-            this.SpitOutOfShortCut(tCoord.Tile, newRoom.realizedRoom, false);
+            this.SpitOutOfShortCut(toCoord.Tile, newRoom.realizedRoom, false);
         }
-        this.playerState.permaDead = false;
-        this.dead = false;
+
+        //if(this.room == null || room == null || this.playerState.permaDead || absGhost.world != newRoom.world) //Different room or null
+        //{
+        //    UnityEngine.Debug.Log("Reviving null / other room ghost to " + newRoom.name);
+        //    if(absGhost.world != newRoom.world)
+        //    {
+        //        absGhost.world = newRoom.world;
+        //        absGhost.pos = toCoord;
+        //    }
+        //    if (room != null)
+        //    {
+        //        room.RemoveEntity(absGhost);
+        //    }
+        //    newRoom.AddEntity(absGhost);
+        //    absGhost.Move(toCoord);
+        //    if (newRoom.realizedRoom == null)
+        //    {
+        //        newRoom.world.ActivateRoom(newRoom);
+        //    }
+        //    this.PlaceInRoom(newRoom.realizedRoom);
+        //}
+        //else //Same room
+        //{
+        //    if (newRoom.realizedRoom == null)
+        //    {
+        //        newRoom.world.ActivateRoom(newRoom);
+        //    }
+        //    //Spits player out at position chosen coord (room exit or camera followed player)
+        //    UnityEngine.Debug.Log("Ghost tp to same room");
+        //    this.SpitOutOfShortCut(toCoord.Tile, newRoom.realizedRoom, false);
+        //}
+
 
         //if (this.playerState.permaDead || this.abstractCreature.world != newRoom.world)
         //{

@@ -29,7 +29,7 @@ public partial class SlughostMod : BaseUnityPlugin
     }
     private void OnEnable()
     {
-
+        MyModdedEnums.CreatureTemplateType.RegisterValues();
         On.RainWorld.OnModsInit += RainWorldOnOnModsInit;
     }
 
@@ -46,18 +46,18 @@ public partial class SlughostMod : BaseUnityPlugin
         {
             if (IsInit) return;
             //Your hooks go here
-            MyModdedEnums.CreatureTemplateType.RegisterValues();
             On.StaticWorld.InitCustomTemplates += StaticWorldOnInitCustomTemplates;
             On.StaticWorld.InitStaticWorld += StaticWorldOnInitStaticWorld;
             On.AbstractCreature.Realize += AbstractCreatureOnRealize;
-            On.PlayerGraphics.InitiateSprites += PlayerGraphicsOnInitiateSprites;
-            //On.Player.InitiateGraphicsModule += PlayerOnInitiateGraphicsModule;
+            //On.PlayerGraphics.InitiateSprites += PlayerGraphicsOnInitiateSprites;
+            On.Player.InitiateGraphicsModule += PlayerOnInitiateGraphicsModule;
             On.Player.Die += PlayerOnDie;
             On.Player.Grabability += PlayerOnGrabability;
             On.ShelterDoor.Close += ShelterDoorOnClose;
             On.RainWorldGame.ctor += RainWorldGameOnctor;
             On.Player.Destroy += PlayerOnDestroy;
             On.Player.Update += PlayerOnUpdate;
+            On.Player.TriggerCameraSwitch += PlayerOnTriggerCameraSwitch;
             On.RoomCamera.ChangeCameraToPlayer += RoomCameraOnChangeCameraToPlayer;
             On.Player.LungUpdate += PlayerOnLungUpdate;
             On.Weapon.HitThisObject += WeaponOnHitThisObject;
@@ -81,9 +81,10 @@ public partial class SlughostMod : BaseUnityPlugin
             On.MoreSlugcats.BigJellyFish.HeardNoise += BigJellyFishOnHeardNoise;
 
 
-            On.RainWorldGame.ShutDownProcess += RainWorldGameOnShutDownProcess;
+
             On.GameSession.ctor += GameSessionOnctor;
-            
+            On.RainWorldGame.ShutDownProcess += RainWorldGameOnShutDownProcess;
+
             MachineConnector.SetRegisteredOI("Ravethn.Slughost", Options);
             IsInit = true;
         }
@@ -96,6 +97,7 @@ public partial class SlughostMod : BaseUnityPlugin
     
     private void RainWorldGameOnShutDownProcess(On.RainWorldGame.orig_ShutDownProcess orig, RainWorldGame self)
     {
+        forbidGhosts = true;
         orig(self);
         ClearMemory();
     }
@@ -112,6 +114,7 @@ public partial class SlughostMod : BaseUnityPlugin
         //If you have any collections (lists, dictionaries, etc.)
         //Clear them here to prevent a memory leak
         //YourList.Clear();
+        currentGhosts.Clear();
     }
 
     #endregion

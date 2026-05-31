@@ -5,16 +5,81 @@ using System.Linq;
 using UnityEngine;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using Slughost;
 
 namespace SlughostMod;
 
 public partial class SlughostMod
 {
-    private bool improvedInputEnabled = false;
+    private static bool improvedInputEnabled = false;
     //Used to prevent ghosts from spawning and being saved in shelters
-    private bool forbidGhosts = false;
+    private static bool forbidGhosts = false;
 
+    //List of current scugghost AbstractCreatures
+    //Used to teleport ghosts when a new region is loaded
+    public static List<AbstractCreature> currentGhosts = new List<AbstractCreature>();
+
+    public class CamCoordGetter
+    {
+        public WorldCoordinate coord;
+        public World world;
+        public CamCoordGetter(Player self)
+        {
+            //Outputs WorldCoordinate of player with camera,
+            // or the closest exit that is in camera's room
+
+            RainWorldGame rainWorldGame = self.abstractCreature.world.game;
+            WorldCoordinate selfCoord = self.abstractCreature.pos;
+
+            UnityEngine.Debug.Log("Current coord: " + selfCoord.ToString());
+            float smallestDist = 0;
+            int closestCamIndex = 0;
+            WorldCoordinate? sendCoord = null;
+
+
+            //Tests distance to all exits in rooms with cameras and gets smallest distance coord
+            for (int i = 0; i < rainWorldGame.cameras.Length; i++)
+            {
+                UnityEngine.Debug.Log("At camera: " + i + ". Followed critter coord: " + (rainWorldGame.cameras[i].followAbstractCreature.pos).ToString());
+                Room checkingCamRoom = rainWorldGame.cameras[i].room;
+                for (int j = 0; j < checkingCamRoom.abstractRoom.connections.Length; j++)
+                {
+                    WorldCoordinate shortcutCoord = checkingCamRoom.LocalCoordinateOfNode(checkingCamRoom.abstractRoom.ExitIndex(checkingCamRoom.abstractRoom.connections[j]));
+                    float distance = Custom.BetweenRoomsDistance(self.abstractCreature.world, selfCoord, shortcutCoord);
+                    if (smallestDist == 0 || (distance <= smallestDist && distance > 0))
+                    {
+                        sendCoord = shortcutCoord;
+                        closestCamIndex = i;
+                        smallestDist = distance;
+                    }
+                }
+            }
+
+            //Send player to the closest cameras player
+            AbstractCreature camCritter = rainWorldGame.cameras[closestCamIndex].followAbstractCreature;
+            if (camCritter != null && camCritter != self.abstractCreature && camCritter.realizedCreature != null && !camCritter.realizedCreature.inShortcut && !camCritter.world.game.IsArenaSession)
+            {
+                coord = camCritter.pos;
+                world = camCritter.world;
+                UnityEngine.Debug.Log("Ghost spawn location at camera player: " + coord.ToString());
+                UnityEngine.Debug.Log("At camera index: " + closestCamIndex.ToString());
+
+            }
+            //If camcritter dont exist sends to the closest pipe to ghost in camera room
+            else if (sendCoord != null)
+            {
+                UnityEngine.Debug.Log("Smallest distance is: " + smallestDist.ToString() + " to pipe at: " + sendCoord.ToString());
+                coord = (WorldCoordinate)sendCoord;
+                world = rainWorldGame.cameras[closestCamIndex].room.world;
+            }
+            //Otherwise, choose random exit coord in camera room
+            else
+            {
+                Room camRoom = self.abstractCreature.world.game.cameras[closestCamIndex].room;
+                coord = camRoom.LocalCoordinateOfNode(camRoom.abstractRoom.ExitIndex(camRoom.abstractRoom.connections[UnityEngine.Random.Range(0, camRoom.abstractRoom.connections.Length)]));
+                world = rainWorldGame.cameras[closestCamIndex].room.world;
+            }
+        }
+    }
     private static WorldCoordinate GetSendCoord(Player self)
     {
         //Outputs WorldCoordinate of player with camera,
@@ -66,15 +131,21 @@ public partial class SlughostMod
         }
     }
 
-    private static void CreateGhost(Player self, WorldCoordinate coord)
+    public static void CreateGhost(Player self, WorldCoordinate coord, World world)
     {
-        AbstractCreature newGhost = new AbstractCreature(self.abstractCreature.world, StaticWorld.GetCreatureTemplate(MyModdedEnums.CreatureTemplateType.SlugcatGhost), null, coord, self.abstractCreature.world.game.GetNewID());
+        if (forbidGhosts)
+        {
+            return;
+        }
+        AbstractCreature newGhost = new AbstractCreature(world, StaticWorld.GetCreatureTemplate(MyModdedEnums.CreatureTemplateType.SlugcatGhost), null, coord, world.game.GetNewID());
         newGhost.state = new PlayerGhostState(newGhost, self.playerState.playerNumber, self.playerState.slugcatCharacter, false);
         if (ModManager.CoopAvailable)
         {
             (newGhost.state as PlayerGhostState).isPup = self.playerState.isPup;
         }
-        AbstractRoom targetRoom = self.abstractCreature.world.GetAbstractRoom(coord);
+        currentGhosts.Add(newGhost);
+        UnityEngine.Debug.Log("Added ghost to currentGhosts!");
+        AbstractRoom targetRoom = world.GetAbstractRoom(coord);
         if(targetRoom == null)
         {
             UnityEngine.Debug.Log("Tried to spawn ghost in null room!");
@@ -262,20 +333,20 @@ public partial class SlughostMod
     #endregion
 
 
-    //Ghost transparency
-    private void PlayerGraphicsOnInitiateSprites(On.PlayerGraphics.orig_InitiateSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
-    {
-        orig(self, sLeaser, rCam);
-        if (self.player is PlayerGhost)
-        {
-            for (int ghostSprite = 0; ghostSprite < 9; ghostSprite++)
-            {
-                sLeaser.sprites[ghostSprite].shader = rCam.game.rainWorld.Shaders["Hologram"];
-                sLeaser.sprites[ghostSprite].alpha = 0.93f;
-            }
+    
+    //private void PlayerGraphicsOnInitiateSprites(On.PlayerGraphics.orig_InitiateSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
+    //{
+    //    orig(self, sLeaser, rCam);
+    //    if (self.player is PlayerGhost)
+    //    {
+    //        for (int ghostSprite = 0; ghostSprite < 9; ghostSprite++)
+    //        {
+    //            sLeaser.sprites[ghostSprite].shader = rCam.game.rainWorld.Shaders["Hologram"];
+    //            sLeaser.sprites[ghostSprite].alpha = 0.93f;
+    //        }
 
-        }
-    }
+    //    }
+    //}
 
     private void PlayerOnInitiateGraphicsModule(On.Player.orig_InitiateGraphicsModule orig, Player self)
     {
@@ -375,14 +446,13 @@ public partial class SlughostMod
     //Creates ghost when a player dies
     private void PlayerOnDie(On.Player.orig_Die orig, Player self)
     {
-        //Avoid calling self.room unless check for null because it is null whenever player is dragged into den
+        //Avoid calling self.room here unless checking for null because it is null whenever player is dragged into den
 
 
         if (!self.isNPC && !self.dead && self.abstractCreature != null && !self.abstractCreature.world.game.setupValues.invincibility && !forbidGhosts && !self.playerState.isGhost && !(self is PlayerGhost))
         {
-            WorldCoordinate spawnCoord = self.abstractCreature.pos;
             ////Creates ghost slugcat
-            CreateGhost(self, spawnCoord);
+            CreateGhost(self, self.abstractCreature.pos, self.abstractCreature.world);
         }
         orig(self);
     }
@@ -390,22 +460,39 @@ public partial class SlughostMod
     private void PlayerOnDestroy(On.Player.orig_Destroy orig, Player self)
     {
         UnityEngine.Debug.Log("DESTROY RUN");
-        if (self is PlayerGhost && !forbidGhosts)
+        if (self is PlayerGhost)
         {
-            //FOR GHOSTS
+            //FOR GHOST DEATH
             //Ghost deleted spawns new ghost (separate to make sure ghosts that somehow died are respawned when destroyed)
             //New ghost doesn't need to be created when a ghost permadies since it does not delete itself
-            WorldCoordinate spawnCoord = GetSendCoord(self);
-            CreateGhost(self, spawnCoord);
+            if (!forbidGhosts)
+            {
+                for(int i = 0; i < currentGhosts.Count; i++)
+                {
+                    if(self.playerState.playerNumber == (currentGhosts[i].state as PlayerGhostState).playerNumber)
+                    {
+                        if (currentGhosts.Remove(self.abstractCreature))
+                        {
+                            UnityEngine.Debug.Log("Removed a scughost from currentGhosts!");
+                        }
+                    }
+                }
+
+                CamCoordGetter to = new CamCoordGetter(self);
+                if((self as PlayerGhost).destroyRespawn)
+                {
+                    CreateGhost(self, to.coord, to.world);
+                }
+            }
             //UnityEngine.Debug.Log("Ghost destroyed! Creating new ghost!");
         }
         else if (!ModManager.CoopAvailable && !forbidGhosts && !self.isNPC && !self.playerState.isGhost && !self.playerState.dead)
         {
-            //FOR PLAYERS
+            //FOR PLAYER DEATH
             //Back up case for when not coopavailable since with without it, does not permadie player and just deletes them instantly
             //If player deleted spawns new ghost
-            WorldCoordinate spawnCoord2 = GetSendCoord(self);
-            CreateGhost(self, spawnCoord2);
+            CamCoordGetter to = new CamCoordGetter(self);
+            CreateGhost(self, to.coord, to.world);
         }
         orig(self);
     }
@@ -420,7 +507,8 @@ public partial class SlughostMod
             if (forbidGhosts)
             {
                 //Might be able to get rid of this variable and replace it with hook into ShelterDoor.DoorClosed to delete there
-                self.slatedForDeletetion = true;
+                ghost.destroyRespawn = false;
+                ghost.Destroy();
             }
             //Checks if player has been revived, or is alive again (i'm not sure why check for inShortcut??)
             if (!self.inShortcut)
@@ -431,7 +519,8 @@ public partial class SlughostMod
                     {
                         //Deletes ghost if the player is revived
                         //Need to make a cool deletion effect for this
-                        self.slatedForDeletetion = true;
+                        ghost.destroyRespawn = false;
+                        ghost.Destroy();
                     }
                 }
 
@@ -463,8 +552,8 @@ public partial class SlughostMod
                 //Debug.Log("GhostTeleTimer: " + (self as PlayerGhost).ghostTeleTimer.ToString());
                 if (ghost.ghostTeleTimer == 45)
                 {
-
-                    ghost.WarpAndRevive(GetSendCoord(self));
+                    CamCoordGetter to = new CamCoordGetter(self);
+                    ghost.WarpAndRevive(to.coord, to.world);
                     Color playerColor = RainWorld.PlayerObjectBodyColors[self.playerState.playerNumber];
                     Vector2 playerPos = self.mainBodyChunk.pos;
                     //Teleporting effects
@@ -502,28 +591,53 @@ public partial class SlughostMod
         }
     }
 
+    private void PlayerOnTriggerCameraSwitch(On.Player.orig_TriggerCameraSwitch orig, Player self)
+    {
+        //If there are alive players, ghost cannot use camera
+        if (self is PlayerGhost && self.abstractCreature.world.game.AlivePlayers.Count > 0)
+        {
+            return;
+        }
+        //While all players dead, dead players cannot call the camera only ghosts
+        else if (self.dead && self.abstractCreature.world.game.AlivePlayers.Count == 0)
+        {
+            return;
+        }
+            orig(self);
+    }
+
     private void RoomCameraOnChangeCameraToPlayer(On.RoomCamera.orig_ChangeCameraToPlayer orig, RoomCamera self, AbstractCreature cameraTarget)
     {
-        if(cameraTarget != null && cameraTarget.realizedCreature != null)
+        if (cameraTarget != null)
         {
-            if(cameraTarget.realizedCreature is PlayerGhost)
+            if (self.game.AlivePlayers.Count == 0 && cameraTarget.state.dead)
             {
-                Player ghost = cameraTarget.realizedCreature as Player;
                 if (Custom.rainWorld.options.cameraCycling)
                 {
-                    int index = (ghost.playerState.playerNumber + 1) % cameraTarget.world.game.session.Players.Count<AbstractCreature>();
-                    cameraTarget = cameraTarget.world.game.Players[index];
-                }
-                else
-                {
-                    cameraTarget = null;
+                    UnityEngine.Debug.Log("We have a total of: " + currentGhosts.Count.ToString() + " scug ghosts!");
+                    //Want to target ghost slugs instead of players
+                    if (currentGhosts.Count > 0)
+                    {
+                        int ghostTargetIndex = 0;
+                        for (int i = 0; i < currentGhosts.Count; i++)
+                        {
+                            if ((currentGhosts[i].state as PlayerState).playerNumber == (cameraTarget.state as PlayerState).playerNumber)
+                            {
+                                ghostTargetIndex = i;
+                                break;
+                            }
+                        }
+                        int index = (ghostTargetIndex + 1) % currentGhosts.Count;
+                        cameraTarget = currentGhosts[index];
+
+                    }
                 }
             }
         }
         orig(self, cameraTarget);
     }
 
-    
+
     private void PlayerGraphicsOnSetSpearProgress(On.PlayerGraphics.TailSpeckles.orig_setSpearProgress orig, PlayerGraphics.TailSpeckles self, float p)
     {
         orig(self, p);
