@@ -45,28 +45,49 @@ public partial class SlughostMod : BaseUnityPlugin
         try
         {
             if (IsInit) return;
-            //Your hooks go here
+
+            //Hooks
+
+            //Implement scug ghost creature template
             On.StaticWorld.InitCustomTemplates += StaticWorldOnInitCustomTemplates;
             On.StaticWorld.InitStaticWorld += StaticWorldOnInitStaticWorld;
             On.AbstractCreature.Realize += AbstractCreatureOnRealize;
-            //On.PlayerGraphics.InitiateSprites += PlayerGraphicsOnInitiateSprites;
+
+            //Game over prompt
+            On.HUD.TextPrompt.ctor += HUDTextPromptOnCtor;
+
+            //Creation and deletion
             On.Player.InitiateGraphicsModule += PlayerOnInitiateGraphicsModule;
+            //On.PlayerGraphics.InitiateSprites += PlayerGraphicsOnInitiateSprites;
             On.Player.Die += PlayerOnDie;
-            On.Player.Grabability += PlayerOnGrabability;
             On.ShelterDoor.Close += ShelterDoorOnClose;
             On.RainWorldGame.ctor += RainWorldGameOnctor;
             On.Player.Destroy += PlayerOnDestroy;
             On.Player.Update += PlayerOnUpdate;
+
+            //Camera adjustments
             On.Player.TriggerCameraSwitch += PlayerOnTriggerCameraSwitch;
             On.RoomCamera.ChangeCameraToPlayer += RoomCameraOnChangeCameraToPlayer;
-            On.Player.LungUpdate += PlayerOnLungUpdate;
+
+            //Interactions
+            On.Player.Grabability += PlayerOnGrabability;
+            On.Player.SlugOnBack.ChangeOverlap += SlugOnBackOnChangeOverlap;
             On.Weapon.HitThisObject += WeaponOnHitThisObject;
+            On.Player.LungUpdate += PlayerOnLungUpdate;
             On.PlayerGraphics.TailSpeckles.setSpearProgress += PlayerGraphicsOnSetSpearProgress;
             On.Player.PyroDeath += PlayerOnPyroDeath;
+
+            //Creature reactions
             On.BigEel.JawsSnap += BigEelOnJawsSnap;
             On.MirosBirdAI.DoIWantToBiteCreature += MirosBirdAIOnDoIWantToBiteCreature;
             On.MirosBird.JawSlamShut += MirosBirdOnJawSlamShut;
-            On.Player.SlugOnBack.ChangeOverlap += SlugOnBackOnChangeOverlap;
+            IL.MoreSlugcats.StowawayBug.Update += StowawayBugILUpdate;
+            On.NoiseTracker.HeardNoise += NoiseTrackerOnHeardNoise;
+            IL.JellyFish.Update += JellyFishILUpdate;
+            On.MoreSlugcats.BigJellyFish.ValidGrabCreature += BigJellyFishOnValidGrabCreature;
+            On.MoreSlugcats.BigJellyFish.HeardNoise += BigJellyFishOnHeardNoise;
+
+            //Map for ghost
             IL.GhostCreatureSedater.Update += GhostCreatureSedaterILUpdate;
             On.CreatureSymbol.ColorOfCreature += CreatureSymbolOnColorOfCreature;
             On.CreatureSymbol.SpriteNameOfCreature += CreatureSymbolOnSpriteNameOfCreature;
@@ -74,14 +95,9 @@ public partial class SlughostMod : BaseUnityPlugin
             IL.HUD.Map.Draw += MapILDraw;
             On.HUD.Map.ItemMarker.ItemMakerData.DataFromAbstractPhysical += ItemMakerDataOnDataFromAbstractPhysical;
             On.HUD.Map.ShelterMarker.ItemInShelterMarker.ItemInShelterData.DataFromAbstractPhysical += ItemInShelterDataOnDataFromAbstractPhysical;
-            IL.MoreSlugcats.StowawayBug.Update += StowawayBugILUpdate;
-            On.NoiseTracker.HeardNoise += NoiseTrackerOnHeardNoise;
-            IL.JellyFish.Update += JellyFishILUpdate;
-            On.MoreSlugcats.BigJellyFish.ValidGrabCreature += BigJellyFishOnValidGrabCreature;
-            On.MoreSlugcats.BigJellyFish.HeardNoise += BigJellyFishOnHeardNoise;
 
 
-
+            //Remove ghosts at shutdown or cycle end
             On.GameSession.ctor += GameSessionOnctor;
             On.RainWorldGame.ShutDownProcess += RainWorldGameOnShutDownProcess;
 

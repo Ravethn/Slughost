@@ -80,6 +80,8 @@ public partial class SlughostMod
             }
         }
     }
+
+    //Replaced with CamCoordGetter
     private static WorldCoordinate GetSendCoord(Player self)
     {
         //Outputs WorldCoordinate of player with camera,
@@ -256,7 +258,8 @@ public partial class SlughostMod
     {
         if (iconData.critType == MyModdedEnums.CreatureTemplateType.SlugcatGhost && iconData.critType.index != -1)
         {
-            return PlayerGraphics.DefaultSlugcatColor(SlugcatStats.Name.ArenaColor(iconData.intData));
+            Color playerColor = PlayerGraphics.DefaultSlugcatColor(SlugcatStats.Name.ArenaColor(iconData.intData));
+            return playerColor.CloneWithNewAlpha(0.5f);
         }
         return orig(iconData);
     }
@@ -358,6 +361,17 @@ public partial class SlughostMod
         {
             orig(self);
         }
+    }
+
+    //Updates HUD for Game Over text so that keyboard does use SPACEBAR for restart so keyboard ghost can use map in gameover mode
+    private void HUDTextPromptOnCtor(On.HUD.TextPrompt.orig_ctor orig, HUD.TextPrompt self, HUD.HUD hud)
+    {
+        orig(self, hud);
+        for(int i = 0; i < self.defaultPauseControls.Length; i++)
+        {
+            self.defaultMapControls[i] = false;
+        }
+        self.UpdateGameOverString(self.lastControllerType);
     }
 
     //Alters ghost players to be unable to grab or be grabbed
@@ -484,7 +498,6 @@ public partial class SlughostMod
                     CreateGhost(self, to.coord, to.world);
                 }
             }
-            //UnityEngine.Debug.Log("Ghost destroyed! Creating new ghost!");
         }
         else if (!ModManager.CoopAvailable && !forbidGhosts && !self.isNPC && !self.playerState.isGhost && !self.playerState.dead)
         {
@@ -597,40 +610,43 @@ public partial class SlughostMod
         if (self is PlayerGhost && self.abstractCreature.world.game.AlivePlayers.Count > 0)
         {
             return;
+            
         }
         //While all players dead, dead players cannot call the camera only ghosts
         else if (self.dead && self.abstractCreature.world.game.AlivePlayers.Count == 0)
         {
             return;
         }
-            orig(self);
+        //If cycling is on and camera is on self, then orig will return early and point to toward player with next player number
+        //Using RoomCameraOnChangeCameraToPlayer hook to catch it
+        orig(self);
     }
 
     private void RoomCameraOnChangeCameraToPlayer(On.RoomCamera.orig_ChangeCameraToPlayer orig, RoomCamera self, AbstractCreature cameraTarget)
     {
         if (cameraTarget != null)
         {
-            if (self.game.AlivePlayers.Count == 0 && cameraTarget.state.dead)
+            //Ghost cycling
+            //Player.TriggerCameraSwitch sends actual player with next playernumber, tries to convert that to its corresponding ghost
+            if (self.game.AlivePlayers.Count == 0 && cameraTarget.state.dead && Custom.rainWorld.options.cameraCycling)
             {
-                if (Custom.rainWorld.options.cameraCycling)
+                UnityEngine.Debug.Log("We have a total of: " + currentGhosts.Count.ToString() + " scug ghosts!");
+                if (currentGhosts.Count > 0)
                 {
-                    UnityEngine.Debug.Log("We have a total of: " + currentGhosts.Count.ToString() + " scug ghosts!");
-                    //Want to target ghost slugs instead of players
-                    if (currentGhosts.Count > 0)
+                    //Find related slughost to target instead
+                    int ghostTargetIndex = 0;
+                    for (int i = 0; i < currentGhosts.Count; i++)
                     {
-                        int ghostTargetIndex = 0;
-                        for (int i = 0; i < currentGhosts.Count; i++)
+                        if ((currentGhosts[i].state as PlayerState).playerNumber == (cameraTarget.state as PlayerState).playerNumber)
                         {
-                            if ((currentGhosts[i].state as PlayerState).playerNumber == (cameraTarget.state as PlayerState).playerNumber)
-                            {
-                                ghostTargetIndex = i;
-                                break;
-                            }
+                            cameraTarget = currentGhosts[i];
+                            break;
                         }
-                        int index = (ghostTargetIndex + 1) % currentGhosts.Count;
-                        cameraTarget = currentGhosts[index];
-
                     }
+                    //int index = (ghostTargetIndex + 1) % currentGhosts.Count;
+                    //cameraTarget = currentGhosts[index];
+                    
+
                 }
             }
         }

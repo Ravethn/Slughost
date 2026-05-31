@@ -2,6 +2,7 @@
 using static SlughostMod.SlughostMod;
 namespace SlughostMod;
 
+//Maybe stop inheriting player to avoid incompatabilities??
 public class PlayerGhost : Player, INotifyWhenRoomUnloaded
 {
     public int ghostTeleTimer;
@@ -10,7 +11,6 @@ public class PlayerGhost : Player, INotifyWhenRoomUnloaded
     
     public PlayerGhost(AbstractCreature abstractCreature, World world) : base(abstractCreature, world)
     {
-
         this.destroyRespawn = true;
         foreach (var chunk in bodyChunks)
         {
@@ -37,6 +37,7 @@ public class PlayerGhost : Player, INotifyWhenRoomUnloaded
         {
             this.room.RemoveObject(this);
             this.abstractCreature.Room.RemoveEntity(this.abstractCreature);
+            currentGhosts.Remove(this.abstractCreature);
         }
         CamCoordGetter to = new CamCoordGetter(this);
         CreateGhost(this, to.coord, to.world);
