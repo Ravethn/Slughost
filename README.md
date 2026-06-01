@@ -1,4 +1,4 @@
 # Slughost
 Rain World mod that allows dead players to still play as a ghost after dying.
 
-https://steamcommunity.com/sharedfiles/filedetails/?id=3244013707
+Steam Workshop: https://steamcommunity.com/sharedfiles/filedetails/?id=3244013707
