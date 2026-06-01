@@ -10,7 +10,7 @@ using BepInEx;
 
 namespace SlughostMod;
 
-[BepInPlugin("Ravethn.Slughost", "Slughosts", "1.0.5")]
+[BepInPlugin("Ravethn.Slughost", "Slughosts", "1.0.6")]
 public partial class SlughostMod : BaseUnityPlugin
 {
     private SlughostModOptions Options;
