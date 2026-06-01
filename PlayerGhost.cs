@@ -1,16 +1,17 @@
 ﻿using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using UnityEngine;
-
+using static SlughostMod.SlughostMod;
 namespace SlughostMod;
 
-public class PlayerGhost : Player
+//Maybe stop inheriting player to avoid incompatabilities??
+public class PlayerGhost : Player, INotifyWhenRoomUnloaded
 {
     public int ghostTeleTimer;
+    public float flickerFactor;
+    public bool destroyRespawn;
     
     public PlayerGhost(AbstractCreature abstractCreature, World world) : base(abstractCreature, world)
     {
-        
+        this.destroyRespawn = true;
         foreach (var chunk in bodyChunks)
         {
             chunk.collideWithObjects = false;
@@ -19,94 +20,153 @@ public class PlayerGhost : Player
         this.objectInStomach = null;
         this.canBeHitByWeapons = false;
         ghostTeleTimer = 0;
+        this.glowing = false;
     }
 
-
-    public static void WarpAndReviveGhost(PlayerGhost self, AbstractRoom newRoom, WorldCoordinate position)
+    ~PlayerGhost()
     {
-        //JollyCustom.WarpAndRevivePlayer()
-        //
-        if (self.playerState.permaDead && self != null && self.room != null)
+        if(this.abstractCreature != null)
         {
-            //Debug.Log("1");
-            
-            self.room.RemoveObject(self.abstractCreature.realizedCreature);
-            if (self.grasps[0] != null)
+            currentGhosts.Remove(this.abstractCreature);
+        }
+    }
+
+    public void RoomUnloaded()
+    {
+        if(this.room != null)
+        {
+            this.room.RemoveObject(this);
+            this.abstractCreature.Room.RemoveEntity(this.abstractCreature);
+            currentGhosts.Remove(this.abstractCreature);
+        }
+        CamCoordGetter to = new CamCoordGetter(this);
+        CreateGhost(this, to.coord, to.world);
+        //UnityEngine.Debug.Log("Scughost: My room unloaded!");
+    }
+
+    //public override void Abstractize()
+    //{
+    //    UnityEngine.Debug.Log("Abstracting ghost!");
+    //    this.Destroy();
+    //    base.Abstractize();
+    //}
+
+    public void WarpAndRevive(WorldCoordinate toCoord, World toWorld)
+    {
+        AbstractCreature absGhost = this.abstractCreature;
+        AbstractRoom absRoom = absGhost.Room;
+        AbstractRoom newRoom = toWorld.GetAbstractRoom(toCoord.room);
+        if (newRoom == null)
+        {
+            UnityEngine.Debug.Log("Tried to send ghost to null room!");
+            return;
+        }
+        if (this.room != null && absRoom != newRoom) 
+        {
+            this.LoseAllGrasps(); //Drop items before
+            List<AbstractPhysicalObject> allConnectedObjects = absGhost.GetAllConnectedObjects(); //Removing realizedCreature from room
+            for (int i = 0; i < allConnectedObjects.Count; i++)
             {
-                self.ReleaseGrasp(0);
-            }
-            if (self.grasps[1] != null)
-            {
-                self.ReleaseGrasp(1);
-            }
-            List<AbstractPhysicalObject> allConnectedObjects = self.abstractCreature.GetAllConnectedObjects();
-            if(self.room != null)
-            {
-                for (int i = 0; i < allConnectedObjects.Count; i++)
+                if (allConnectedObjects[i].realizedObject != null)
                 {
-                    if (allConnectedObjects[i].realizedObject != null)
-                    {
-                        self.room.RemoveObject(allConnectedObjects[i].realizedObject);
-                    }
+                    this.room.RemoveObject(allConnectedObjects[i].realizedObject);
                 }
             }
-            
-
-        }
-        if(self == null || self.room == null || self.playerState.permaDead || self.abstractCreature.world != newRoom.world)
-        {
-            //Debug.Log("2");
-            
-            if(self.abstractCreature.world != newRoom.world)
+            if(this.room != null)
             {
-                self.abstractCreature.world = newRoom.world;
-                self.abstractCreature.pos = position;
-                self.abstractCreature.Room.RemoveEntity(self.abstractCreature);
+                this.room.RemoveObject(this);
             }
-            newRoom.AddEntity(self.abstractCreature);
-            self.abstractCreature.Move(position);
-            self.abstractCreature.realizedCreature.PlaceInRoom(newRoom.realizedRoom);
-        }
-        //If ghost is in another room
-        else if (self.abstractCreature.Room.name != newRoom.name)
-        {
-            //Debug.Log("3");
-            
-            if(newRoom == null)
+            UnityEngine.Debug.Log("Warping ghost ghost to " + newRoom.name);
+            if (absGhost.world != newRoom.world)
             {
-                self.abstractCreature.world.GetAbstractRoom(newRoom.name);
+                absGhost.world = newRoom.world;
+                absGhost.pos = toCoord;
             }
+            if (absRoom != null)
+            {
+                absRoom.RemoveEntity(absGhost);
+            }
+            newRoom.AddEntity(absGhost);
+            absGhost.Move(toCoord);
+            if (newRoom.realizedRoom == null)
+            {
+                newRoom.world.ActivateRoom(newRoom);
+            }
+            this.PlaceInRoom(newRoom.realizedRoom);
+        }
+        else
+        {
             if(newRoom.realizedRoom == null)
             {
-                newRoom.realizedRoom.game.world.ActivateRoom(newRoom);
+                newRoom.world.ActivateRoom(newRoom);
             }
-            self.room.RemoveObject(self);
-            self.abstractCreature.Move(position);
-            self.PlaceInRoom(newRoom.realizedRoom);
-            Debug.Log("Ghost teleported from another room!");
-            
+            this.SpitOutOfShortCut(toCoord.Tile, newRoom.realizedRoom, false);
         }
-        //If ghost is in the same room
-        else if (self.abstractCreature.Room.name == newRoom.name && newRoom.realizedRoom != null)
-        {
-            if (self.firstChunk.pos != self.room.game.RealizedPlayerFollowedByCamera.firstChunk.pos)
-            {
-                Debug.Log("Ghost tp to camera in same room");
-                for (int i = 0; i < self.bodyChunks.Length; i++)
-                {
-                    self.bodyChunks[i].pos = self.room.game.RealizedPlayerFollowedByCamera.firstChunk.pos;
-                }
-            }
-            else if (newRoom.realizedRoom != null)
-            {
-                Debug.Log("Ghost tp to shortcut spot");
-                self.SpitOutOfShortCut(new RWCustom.IntVector2(position.x, position.y), newRoom.realizedRoom, false);
-            }
+
+        //if(this.room == null || room == null || this.playerState.permaDead || absGhost.world != newRoom.world) //Different room or null
+        //{
+        //    UnityEngine.Debug.Log("Reviving null / other room ghost to " + newRoom.name);
+        //    if(absGhost.world != newRoom.world)
+        //    {
+        //        absGhost.world = newRoom.world;
+        //        absGhost.pos = toCoord;
+        //    }
+        //    if (room != null)
+        //    {
+        //        room.RemoveEntity(absGhost);
+        //    }
+        //    newRoom.AddEntity(absGhost);
+        //    absGhost.Move(toCoord);
+        //    if (newRoom.realizedRoom == null)
+        //    {
+        //        newRoom.world.ActivateRoom(newRoom);
+        //    }
+        //    this.PlaceInRoom(newRoom.realizedRoom);
+        //}
+        //else //Same room
+        //{
+        //    if (newRoom.realizedRoom == null)
+        //    {
+        //        newRoom.world.ActivateRoom(newRoom);
+        //    }
+        //    //Spits player out at position chosen coord (room exit or camera followed player)
+        //    UnityEngine.Debug.Log("Ghost tp to same room");
+        //    this.SpitOutOfShortCut(toCoord.Tile, newRoom.realizedRoom, false);
+        //}
 
 
-        }
-        self.playerState.permaDead = false;
-        self.dead = false;
-        self.exhausted = false;
+        //if (this.playerState.permaDead || this.abstractCreature.world != newRoom.world)
+        //{
+        //    //Debug.Log("2");
+
+        //    if (this.abstractCreature.world != newRoom.world)
+        //    {
+        //        this.abstractCreature.world = newRoom.world;
+        //        this.abstractCreature.pos = tCoord;
+        //        this.abstractCreature.Room.RemoveEntity(this.abstractCreature);
+        //    }
+        //    newRoom.AddEntity(this.abstractCreature);
+        //    this.abstractCreature.Move(tCoord);
+        //    this.PlaceInRoom(newRoom.realizedRoom);
+        //}
+        ////If ghost is in another room
+        //else if (this.abstractCreature.Room.name != newRoom.name)
+        //{
+        //    //Debug.Log("3");
+
+        //    if (newRoom == null)
+        //    {
+        //        this.abstractCreature.world.GetAbstractRoom(newRoom.name);
+        //    }
+        //    if (newRoom.realizedRoom == null)
+        //    {
+        //        newRoom.realizedRoom.game.world.ActivateRoom(newRoom);
+        //    }
+        //    this.room.RemoveObject(this);
+        //    this.abstractCreature.Move(tCoord);
+        //    this.PlaceInRoom(newRoom.realizedRoom);
+        //    UnityEngine.Debug.Log("Ghost teleported from another room!");
+
+        //}
     }
 }

@@ -1,35 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Security;
 using System.Security.Permissions;
-using UnityEngine;
-using RWCustom;
 using BepInEx;
-using Debug = UnityEngine.Debug;
-using System.Data.SqlClient;
-using UnityEngine.Rendering;
-using System.Runtime.Serialization;
-using IL.Menu.Remix.MixedUI;
-using Menu.Remix.MixedUI;
-using On.Menu.Remix.MixedUI;
-using System.Runtime.Remoting.Messaging;
-using MonoMod.RuntimeDetour;
-using System.Xml;
-using MonoMod.Cil;
-using System.Runtime.Remoting.Lifetime;
-using Steamworks;
-using MonoMod;
-using Unity.Collections.LowLevel.Unsafe;
-using IL.Stove.Sample.Session;
-using System.Reflection.Emit;
-using On.Stove.Sample.Session;
-using MonoMod.Utils.Cil;
-using Stove.Sample.Session;
-using Microsoft.Win32.SafeHandles;
-using Unity.Collections;
-using System.Collections;
 
 #pragma warning disable CS0618
 
@@ -38,7 +10,7 @@ using System.Collections;
 
 namespace SlughostMod;
 
-[BepInPlugin("Ravethn.Slughost", "Slughosts", "1.0.5")]
+[BepInPlugin("Ravethn.Slughost", "Slughosts", "1.0.6")]
 public partial class SlughostMod : BaseUnityPlugin
 {
     private SlughostModOptions Options;
@@ -57,7 +29,7 @@ public partial class SlughostMod : BaseUnityPlugin
     }
     private void OnEnable()
     {
-
+        MyModdedEnums.CreatureTemplateType.RegisterValues();
         On.RainWorld.OnModsInit += RainWorldOnOnModsInit;
     }
 
@@ -73,26 +45,49 @@ public partial class SlughostMod : BaseUnityPlugin
         try
         {
             if (IsInit) return;
-            //Your hooks go here
-            MyModdedEnums.CreatureTemplateType.RegisterValues();
+
+            //Hooks
+
+            //Implement scug ghost creature template
             On.StaticWorld.InitCustomTemplates += StaticWorldOnInitCustomTemplates;
             On.StaticWorld.InitStaticWorld += StaticWorldOnInitStaticWorld;
             On.AbstractCreature.Realize += AbstractCreatureOnRealize;
-            On.PlayerGraphics.InitiateSprites += PlayerGraphicsOnInitiateSprites;
+
+            //Game over prompt
+            On.HUD.TextPrompt.ctor += HUDTextPromptOnCtor;
+
+            //Creation and deletion
+            On.Player.InitiateGraphicsModule += PlayerOnInitiateGraphicsModule;
+            //On.PlayerGraphics.InitiateSprites += PlayerGraphicsOnInitiateSprites;
             On.Player.Die += PlayerOnDie;
-            On.Player.Grabability += PlayerOnGrabability;
             On.ShelterDoor.Close += ShelterDoorOnClose;
             On.RainWorldGame.ctor += RainWorldGameOnctor;
             On.Player.Destroy += PlayerOnDestroy;
             On.Player.Update += PlayerOnUpdate;
-            On.Player.LungUpdate += PlayerOnLungUpdate;
+
+            //Camera adjustments
+            On.Player.TriggerCameraSwitch += PlayerOnTriggerCameraSwitch;
+            On.RoomCamera.ChangeCameraToPlayer += RoomCameraOnChangeCameraToPlayer;
+
+            //Interactions
+            On.Player.Grabability += PlayerOnGrabability;
+            On.Player.SlugOnBack.ChangeOverlap += SlugOnBackOnChangeOverlap;
             On.Weapon.HitThisObject += WeaponOnHitThisObject;
+            On.Player.LungUpdate += PlayerOnLungUpdate;
             On.PlayerGraphics.TailSpeckles.setSpearProgress += PlayerGraphicsOnSetSpearProgress;
             On.Player.PyroDeath += PlayerOnPyroDeath;
+
+            //Creature reactions
             On.BigEel.JawsSnap += BigEelOnJawsSnap;
             On.MirosBirdAI.DoIWantToBiteCreature += MirosBirdAIOnDoIWantToBiteCreature;
             On.MirosBird.JawSlamShut += MirosBirdOnJawSlamShut;
-            On.Player.SlugOnBack.ChangeOverlap += SlugOnBackOnChangeOverlap;
+            IL.MoreSlugcats.StowawayBug.Update += StowawayBugILUpdate;
+            On.NoiseTracker.HeardNoise += NoiseTrackerOnHeardNoise;
+            IL.JellyFish.Update += JellyFishILUpdate;
+            On.MoreSlugcats.BigJellyFish.ValidGrabCreature += BigJellyFishOnValidGrabCreature;
+            On.MoreSlugcats.BigJellyFish.HeardNoise += BigJellyFishOnHeardNoise;
+
+            //Map for ghost
             IL.GhostCreatureSedater.Update += GhostCreatureSedaterILUpdate;
             On.CreatureSymbol.ColorOfCreature += CreatureSymbolOnColorOfCreature;
             On.CreatureSymbol.SpriteNameOfCreature += CreatureSymbolOnSpriteNameOfCreature;
@@ -100,16 +95,12 @@ public partial class SlughostMod : BaseUnityPlugin
             IL.HUD.Map.Draw += MapILDraw;
             On.HUD.Map.ItemMarker.ItemMakerData.DataFromAbstractPhysical += ItemMakerDataOnDataFromAbstractPhysical;
             On.HUD.Map.ShelterMarker.ItemInShelterMarker.ItemInShelterData.DataFromAbstractPhysical += ItemInShelterDataOnDataFromAbstractPhysical;
-            IL.MoreSlugcats.StowawayBug.Update += StowawayBugILUpdate;
-            On.NoiseTracker.HeardNoise += NoiseTrackerOnHeardNoise;
-            IL.JellyFish.Update += JellyFishILUpdate;
-            On.MoreSlugcats.BigJellyFish.ValidGrabCreature += BigJellyFishOnValidGrabCreature;
-            On.MoreSlugcats.BigJellyFish.HeardNoise += BigJellyFishOnHeardNoise;
 
 
-            On.RainWorldGame.ShutDownProcess += RainWorldGameOnShutDownProcess;
+            //Remove ghosts at shutdown or cycle end
             On.GameSession.ctor += GameSessionOnctor;
-            
+            On.RainWorldGame.ShutDownProcess += RainWorldGameOnShutDownProcess;
+
             MachineConnector.SetRegisteredOI("Ravethn.Slughost", Options);
             IsInit = true;
         }
@@ -122,6 +113,7 @@ public partial class SlughostMod : BaseUnityPlugin
     
     private void RainWorldGameOnShutDownProcess(On.RainWorldGame.orig_ShutDownProcess orig, RainWorldGame self)
     {
+        forbidGhosts = true;
         orig(self);
         ClearMemory();
     }
@@ -138,6 +130,7 @@ public partial class SlughostMod : BaseUnityPlugin
         //If you have any collections (lists, dictionaries, etc.)
         //Clear them here to prevent a memory leak
         //YourList.Clear();
+        currentGhosts.Clear();
     }
 
     #endregion

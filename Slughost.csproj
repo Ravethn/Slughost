@@ -6,6 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="UnityShaders\**" />
+    <EmbeddedResource Remove="UnityShaders\**" />
+    <None Remove="UnityShaders\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="0Harmony">
       <HintPath>lib\0Harmony.dll</HintPath>
       <Private>False</Private>
