@@ -9,6 +9,8 @@ using MonoMod.Cil;
 namespace SlughostMod;
 
 public partial class SlughostMod
+
+
 {
     private static bool improvedInputEnabled = false;
     //Used to prevent ghosts from spawning and being saved in shelters
@@ -39,6 +41,10 @@ public partial class SlughostMod
             //Tests distance to all exits in rooms with cameras and gets smallest distance coord
             for (int i = 0; i < rainWorldGame.cameras.Length; i++)
             {
+                if (rainWorldGame.cameras[i].followAbstractCreature == self.abstractCreature)
+                {
+                    continue;
+                }
                 UnityEngine.Debug.Log("At camera: " + i + ". Followed critter coord: " + (rainWorldGame.cameras[i].followAbstractCreature.pos).ToString());
                 Room checkingCamRoom = rainWorldGame.cameras[i].room;
                 for (int j = 0; j < checkingCamRoom.abstractRoom.connections.Length; j++)
@@ -78,58 +84,6 @@ public partial class SlughostMod
                 coord = camRoom.LocalCoordinateOfNode(camRoom.abstractRoom.ExitIndex(camRoom.abstractRoom.connections[UnityEngine.Random.Range(0, camRoom.abstractRoom.connections.Length)]));
                 world = rainWorldGame.cameras[closestCamIndex].room.world;
             }
-        }
-    }
-
-    //Replaced with CamCoordGetter
-    private static WorldCoordinate GetSendCoord(Player self)
-    {
-        //Outputs WorldCoordinate of player with camera,
-        // or the closest exit that is on a camera!
-
-        RainWorldGame rainWorldGame = self.abstractCreature.world.game;
-        //Sets ghost spawn point to the player with the camera
-        if (rainWorldGame.RealizedPlayerFollowedByCamera != null && rainWorldGame.RealizedPlayerFollowedByCamera.playerState.playerNumber != self.playerState.playerNumber && !rainWorldGame.RealizedPlayerFollowedByCamera.inShortcut && !self.abstractCreature.world.game.IsArenaSession)
-        {
-            UnityEngine.Debug.Log("Ghost spawn location at camera player");
-            return rainWorldGame.RealizedPlayerFollowedByCamera.coord;
-        }
-        else
-        {
-            WorldCoordinate selfCoord = new WorldCoordinate(self.abstractCreature.pos.room, self.abstractCreature.pos.x, self.abstractCreature.pos.y, 0);
-
-            UnityEngine.Debug.Log("Current coord: " + selfCoord.ToString());
-            float smallestDist = 0;
-            int closestCamIndex = 0;
-            WorldCoordinate? sendCoord = null;
-
-
-            //Tests distance to all exits in rooms with cameras and gets smallest distance coord
-            for (int i = 0; i < rainWorldGame.cameras.Length; i++)
-            {
-                Room checkingCamRoom = rainWorldGame.cameras[i].room;
-                for(int j = 0; j < checkingCamRoom.abstractRoom.connections.Length; j++)
-                {
-                    WorldCoordinate shortcutCoord = checkingCamRoom.LocalCoordinateOfNode(checkingCamRoom.abstractRoom.ExitIndex(checkingCamRoom.abstractRoom.connections[j]));
-                    float distance = Custom.BetweenRoomsDistance(self.abstractCreature.world, selfCoord, shortcutCoord);
-                    if (smallestDist == 0 || (distance <= smallestDist && distance > 0))
-                    {
-                        UnityEngine.Debug.Log("Found new smallest distance: " + distance.ToString());
-                        sendCoord = shortcutCoord;
-                        closestCamIndex = i;
-                        smallestDist = distance;
-                    }
-                }
-            }
-            if (sendCoord != null)
-            {
-                UnityEngine.Debug.Log("Smallest distance is: " + smallestDist.ToString() + " to coord: " + sendCoord.ToString());
-                return (WorldCoordinate)sendCoord;
-            }
-
-            //Otherwise, choose random exit coord
-            Room camRoom = self.abstractCreature.world.game.cameras[closestCamIndex].room;
-            return camRoom.LocalCoordinateOfNode(camRoom.abstractRoom.ExitIndex(camRoom.abstractRoom.connections[UnityEngine.Random.Range(0, camRoom.abstractRoom.connections.Length)]));
         }
     }
 
@@ -335,21 +289,6 @@ public partial class SlughostMod
     }
     #endregion
 
-
-    
-    //private void PlayerGraphicsOnInitiateSprites(On.PlayerGraphics.orig_InitiateSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
-    //{
-    //    orig(self, sLeaser, rCam);
-    //    if (self.player is PlayerGhost)
-    //    {
-    //        for (int ghostSprite = 0; ghostSprite < 9; ghostSprite++)
-    //        {
-    //            sLeaser.sprites[ghostSprite].shader = rCam.game.rainWorld.Shaders["Hologram"];
-    //            sLeaser.sprites[ghostSprite].alpha = 0.93f;
-    //        }
-
-    //    }
-    //}
 
     private void PlayerOnInitiateGraphicsModule(On.Player.orig_InitiateGraphicsModule orig, Player self)
     {
@@ -607,10 +546,9 @@ public partial class SlughostMod
     private void PlayerOnTriggerCameraSwitch(On.Player.orig_TriggerCameraSwitch orig, Player self)
     {
         //If there are alive players, ghost cannot use camera
-        if (self is PlayerGhost && self.abstractCreature.world.game.AlivePlayers.Count > 0)
+        if (self is PlayerGhost && self.abstractCreature.world.game.AlivePlayers.Count >= self.abstractCreature.world.game.cameras.Length)
         {
             return;
-            
         }
         //While all players dead, dead players cannot call the camera only ghosts
         else if (self.dead && self.abstractCreature.world.game.AlivePlayers.Count == 0)
@@ -634,7 +572,6 @@ public partial class SlughostMod
                 if (currentGhosts.Count > 0)
                 {
                     //Find related slughost to target instead
-                    int ghostTargetIndex = 0;
                     for (int i = 0; i < currentGhosts.Count; i++)
                     {
                         if ((currentGhosts[i].state as PlayerState).playerNumber == (cameraTarget.state as PlayerState).playerNumber)
