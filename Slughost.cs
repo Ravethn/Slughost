@@ -1,7 +1,8 @@
-﻿using System;
+﻿using BepInEx;
+using BepInEx.Logging;
+using System;
 using System.Security;
 using System.Security.Permissions;
-using BepInEx;
 
 #pragma warning disable CS0618
 
@@ -10,7 +11,7 @@ using BepInEx;
 
 namespace SlughostMod;
 
-[BepInPlugin("Ravethn.Slughost", "Slughosts", "1.0.6")]
+[BepInPlugin("Ravethn.Slughost", "Slughosts", "1.0.7")]
 public partial class SlughostMod : BaseUnityPlugin
 {
     private SlughostModOptions Options;
@@ -29,7 +30,6 @@ public partial class SlughostMod : BaseUnityPlugin
     }
     private void OnEnable()
     {
-        MyModdedEnums.CreatureTemplateType.RegisterValues();
         On.RainWorld.OnModsInit += RainWorldOnOnModsInit;
     }
 
@@ -48,6 +48,7 @@ public partial class SlughostMod : BaseUnityPlugin
 
             //Hooks
 
+            MyModdedEnums.CreatureTemplateType.RegisterValues();
             //Implement scug ghost creature template
             On.StaticWorld.InitCustomTemplates += StaticWorldOnInitCustomTemplates;
             On.StaticWorld.InitStaticWorld += StaticWorldOnInitStaticWorld;

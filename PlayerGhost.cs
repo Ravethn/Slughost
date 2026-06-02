@@ -44,13 +44,6 @@ public class PlayerGhost : Player, INotifyWhenRoomUnloaded
         //UnityEngine.Debug.Log("Scughost: My room unloaded!");
     }
 
-    //public override void Abstractize()
-    //{
-    //    UnityEngine.Debug.Log("Abstracting ghost!");
-    //    this.Destroy();
-    //    base.Abstractize();
-    //}
-
     public void WarpAndRevive(WorldCoordinate toCoord, World toWorld)
     {
         AbstractCreature absGhost = this.abstractCreature;
@@ -102,71 +95,5 @@ public class PlayerGhost : Player, INotifyWhenRoomUnloaded
             }
             this.SpitOutOfShortCut(toCoord.Tile, newRoom.realizedRoom, false);
         }
-
-        //if(this.room == null || room == null || this.playerState.permaDead || absGhost.world != newRoom.world) //Different room or null
-        //{
-        //    UnityEngine.Debug.Log("Reviving null / other room ghost to " + newRoom.name);
-        //    if(absGhost.world != newRoom.world)
-        //    {
-        //        absGhost.world = newRoom.world;
-        //        absGhost.pos = toCoord;
-        //    }
-        //    if (room != null)
-        //    {
-        //        room.RemoveEntity(absGhost);
-        //    }
-        //    newRoom.AddEntity(absGhost);
-        //    absGhost.Move(toCoord);
-        //    if (newRoom.realizedRoom == null)
-        //    {
-        //        newRoom.world.ActivateRoom(newRoom);
-        //    }
-        //    this.PlaceInRoom(newRoom.realizedRoom);
-        //}
-        //else //Same room
-        //{
-        //    if (newRoom.realizedRoom == null)
-        //    {
-        //        newRoom.world.ActivateRoom(newRoom);
-        //    }
-        //    //Spits player out at position chosen coord (room exit or camera followed player)
-        //    UnityEngine.Debug.Log("Ghost tp to same room");
-        //    this.SpitOutOfShortCut(toCoord.Tile, newRoom.realizedRoom, false);
-        //}
-
-
-        //if (this.playerState.permaDead || this.abstractCreature.world != newRoom.world)
-        //{
-        //    //Debug.Log("2");
-
-        //    if (this.abstractCreature.world != newRoom.world)
-        //    {
-        //        this.abstractCreature.world = newRoom.world;
-        //        this.abstractCreature.pos = tCoord;
-        //        this.abstractCreature.Room.RemoveEntity(this.abstractCreature);
-        //    }
-        //    newRoom.AddEntity(this.abstractCreature);
-        //    this.abstractCreature.Move(tCoord);
-        //    this.PlaceInRoom(newRoom.realizedRoom);
-        //}
-        ////If ghost is in another room
-        //else if (this.abstractCreature.Room.name != newRoom.name)
-        //{
-        //    //Debug.Log("3");
-
-        //    if (newRoom == null)
-        //    {
-        //        this.abstractCreature.world.GetAbstractRoom(newRoom.name);
-        //    }
-        //    if (newRoom.realizedRoom == null)
-        //    {
-        //        newRoom.realizedRoom.game.world.ActivateRoom(newRoom);
-        //    }
-        //    this.room.RemoveObject(this);
-        //    this.abstractCreature.Move(tCoord);
-        //    this.PlaceInRoom(newRoom.realizedRoom);
-        //    UnityEngine.Debug.Log("Ghost teleported from another room!");
-
-        //}
     }
 }
